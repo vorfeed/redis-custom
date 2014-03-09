@@ -1,0 +1,2619 @@
+diff -ruN jedis-2.4.0-custom/Makefile jedis-2.4.0/Makefile
+--- jedis-2.4.0-custom/Makefile	2014-03-06 11:59:41.000000000 +0800
++++ jedis-2.4.0/Makefile	2014-03-06 12:01:10.000000000 +0800
+@@ -145,6 +145,8 @@
+ logfile /tmp/redis_cluster_node1.log
+ save ""
+ appendonly no
++cluster-enabled yes
++cluster-config-file /tmp/redis_cluster_node1.conf
+ endef
+ 
+ define REDIS_CLUSTER_NODE2_CONF
+@@ -154,6 +156,8 @@
+ logfile /tmp/redis_cluster_node2.log
+ save ""
+ appendonly no
++cluster-enabled yes
++cluster-config-file /tmp/redis_cluster_node2.conf
+ endef
+ 
+ define REDIS_CLUSTER_NODE3_CONF
+@@ -163,6 +167,8 @@
+ logfile /tmp/redis_cluster_node3.log
+ save ""
+ appendonly no
++cluster-enabled yes
++cluster-config-file /tmp/redis_cluster_node3.conf
+ endef
+ 
+ export REDIS1_CONF
+diff -ruN jedis-2.4.0-custom/src/main/java/redis/clients/jedis/BinaryClient.java jedis-2.4.0/src/main/java/redis/clients/jedis/BinaryClient.java
+--- jedis-2.4.0-custom/src/main/java/redis/clients/jedis/BinaryClient.java	2014-03-06 11:59:41.000000000 +0800
++++ jedis-2.4.0/src/main/java/redis/clients/jedis/BinaryClient.java	2014-03-06 12:01:10.000000000 +0800
+@@ -56,15 +56,12 @@
+ 	super(host, port);
+     }
+ 
+-    private byte[][] joinParameters(byte[] first, byte[][] rest, byte[]... others) {
+-	byte[][] result = new byte[rest.length + others.length + 1][];
++    private byte[][] joinParameters(byte[] first, byte[][] rest) {
++	byte[][] result = new byte[rest.length + 1][];
+ 	result[0] = first;
+ 	for (int i = 0; i < rest.length; i++) {
+ 	    result[i + 1] = rest[i];
+ 	}
+-	for (int i = 0; i < others.length; i++) {
+-	    result[i + rest.length + 1] = others[i];
+-	}
+ 	return result;
+     }
+ 
+@@ -95,9 +92,9 @@
+ 	sendCommand(Command.SET, key, value);
+     }
+ 
+-    public void set(final byte[] key, final byte[] value, final byte[] nxxxeq,
++    public void set(final byte[] key, final byte[] value, final byte[] nxxx,
+ 	    final byte[] expx, final long time) {
+-	sendCommand(Command.SET, key, value, nxxxeq, expx, toByteArray(time));
++	sendCommand(Command.SET, key, value, nxxx, expx, toByteArray(time));
+     }
+ 
+     public void get(final byte[] key) {
+@@ -186,10 +183,6 @@
+ 	sendCommand(SETEX, key, toByteArray(seconds), value);
+     }
+ 
+-    public void seteq(final byte[] key, final byte[] value) {
+-	sendCommand(SETEQ, key, value);
+-    }
+-
+     public void mset(final byte[]... keysvalues) {
+ 	sendCommand(MSET, keysvalues);
+     }
+@@ -202,72 +195,18 @@
+ 	sendCommand(DECRBY, key, toByteArray(integer));
+     }
+ 
+-    public void decrBy(final byte[] key, final long integer, final byte[] xx,
+-    		final byte[] expx, final long time) {
+-	sendCommand(DECRBY, key, toByteArray(integer), xx, expx, toByteArray(time));
+-    }
+-
+-    public void decrBy(final byte[] key, final long integer, final byte[] xx) {
+-	sendCommand(DECRBY, key, toByteArray(integer), xx);
+-    }
+-
+-    public void decrBy(final byte[] key, final long integer, final byte[] expx,
+-    		final long time) {
+-	sendCommand(DECRBY, key, toByteArray(integer), expx, toByteArray(time));
+-    }
+-
+     public void decr(final byte[] key) {
+ 	sendCommand(DECR, key);
+     }
+ 
+-    public void decr(final byte[] key, final byte[] xx, final byte[] expx,
+-    		final long time) {
+-	sendCommand(DECR, key, xx, expx, toByteArray(time));
+-    }
+-
+-    public void decr(final byte[] key, final byte[] xx) {
+-	sendCommand(DECR, key, xx);
+-    }
+-
+-    public void decr(final byte[] key, final byte[] expx, final long time) {
+-	sendCommand(DECR, key, expx, toByteArray(time));
+-    }
+-
+     public void incrBy(final byte[] key, final long integer) {
+ 	sendCommand(INCRBY, key, toByteArray(integer));
+     }
+ 
+-    public void incrBy(final byte[] key, final long integer, final byte[] xx,
+-    		final byte[] expx, final long time) {
+-	sendCommand(INCRBY, key, toByteArray(integer), xx, expx, toByteArray(time));
+-    }
+-
+-    public void incrBy(final byte[] key, final long integer, final byte[] xx) {
+-	sendCommand(INCRBY, key, toByteArray(integer), xx);
+-    }
+-
+-    public void incrBy(final byte[] key, final long integer, final byte[] expx,
+-    		final long time) {
+-	sendCommand(INCRBY, key, toByteArray(integer), expx, toByteArray(time));
+-    }
+-
+     public void incr(final byte[] key) {
+ 	sendCommand(INCR, key);
+     }
+ 
+-    public void incr(final byte[] key, final byte[] xx, final byte[] expx,
+-    		final long time) {
+-	sendCommand(INCR, key, xx, expx, toByteArray(time));
+-    }
+-
+-    public void incr(final byte[] key, final byte[] xx) {
+-	sendCommand(INCR, key, xx);
+-    }
+-
+-    public void incr(final byte[] key, final byte[] expx, final long time) {
+-	sendCommand(INCR, key, expx, toByteArray(time));
+-    }
+-
+     public void append(final byte[] key, final byte[] value) {
+ 	sendCommand(APPEND, key, value);
+     }
+@@ -288,18 +227,6 @@
+ 	sendCommand(HSETNX, key, field, value);
+     }
+ 
+-    public void hsetex(final byte[] key, final byte[] field, final byte[] value) {
+-	sendCommand(HSETEX, key, field, value);
+-    }
+-
+-    public void hsetknx(final byte[] key, final byte[] field, final byte[] value) {
+-	sendCommand(HSETKNX, key, field, value);
+-    }
+-
+-    public void hsetkex(final byte[] key, final byte[] field, final byte[] value) {
+-	sendCommand(HSETKEX, key, field, value);
+-    }
+-
+     public void hmset(final byte[] key, final Map<byte[], byte[]> hash) {
+ 	final List<byte[]> params = new ArrayList<byte[]>();
+ 	params.add(key);
+@@ -311,28 +238,6 @@
+ 	sendCommand(HMSET, params.toArray(new byte[params.size()][]));
+     }
+ 
+-    public void hmsetnx(final byte[] key, final Map<byte[], byte[]> hash) {
+-	final List<byte[]> params = new ArrayList<byte[]>();
+-	params.add(key);
+-
+-	for (final Entry<byte[], byte[]> entry : hash.entrySet()) {
+-	    params.add(entry.getKey());
+-	    params.add(entry.getValue());
+-	}
+-	sendCommand(HMSETNX, params.toArray(new byte[params.size()][]));
+-    }
+-
+-    public void hmsetex(final byte[] key, final Map<byte[], byte[]> hash) {
+-	final List<byte[]> params = new ArrayList<byte[]>();
+-	params.add(key);
+-
+-	for (final Entry<byte[], byte[]> entry : hash.entrySet()) {
+-	    params.add(entry.getKey());
+-	    params.add(entry.getValue());
+-	}
+-	sendCommand(HMSETEX, params.toArray(new byte[params.size()][]));
+-    }
+-
+     public void hmget(final byte[] key, final byte[]... fields) {
+ 	final byte[][] params = new byte[fields.length + 1][];
+ 	params[0] = key;
+@@ -344,21 +249,6 @@
+ 	sendCommand(HINCRBY, key, field, toByteArray(value));
+     }
+ 
+-    public void hincrByex(final byte[] key, final byte[] field, final long value) {
+-	sendCommand(HINCRBYEX, key, field, toByteArray(value));
+-    }
+-
+-    public void hmincrByex(final byte[] key, final Map<byte[], Long> hash) {
+-	final List<byte[]> params = new ArrayList<byte[]>();
+-	params.add(key);
+-
+-	for (final Entry<byte[], Long> entry : hash.entrySet()) {
+-	    params.add(entry.getKey());
+-	    params.add(toByteArray(entry.getValue()));
+-	}
+-	sendCommand(HMINCRBYEX, params.toArray(new byte[params.size()][]));
+-    }
+-
+     public void hexists(final byte[] key, final byte[] field) {
+ 	sendCommand(HEXISTS, key, field);
+     }
+@@ -403,18 +293,6 @@
+ 	sendCommand(LTRIM, key, toByteArray(start), toByteArray(end));
+     }
+ 
+-    public void lpushltrim(final byte[] key, final long start,
+-    		final long end, final byte[]... strings) {
+-	sendCommand(LPUSHLTRIM, joinParameters(key, strings, toByteArray(start),
+-			toByteArray(end)));
+-    }
+-
+-    public void lpushxltrim(final byte[] key, final long start,
+-    		final long end, final byte[]... string) {
+-	sendCommand(LPUSHXLTRIM, joinParameters(key, string, toByteArray(start),
+-			toByteArray(end)));
+-    }
+-
+     public void lindex(final byte[] key, final long index) {
+ 	sendCommand(LINDEX, key, toByteArray(index));
+     }
+@@ -435,14 +313,6 @@
+ 	sendCommand(RPOP, key);
+     }
+ 
+-    public void lfind(final byte[] key, final byte[] value, final long num) {
+-	sendCommand(LFIND, key, value, toByteArray(num));
+-    }
+-
+-    public void rfind(final byte[] key, final byte[] value, final long num) {
+-	sendCommand(RFIND, key, value, toByteArray(num));
+-    }
+-
+     public void rpoplpush(final byte[] srckey, final byte[] dstkey) {
+ 	sendCommand(RPOPLPUSH, srckey, dstkey);
+     }
+@@ -451,10 +321,6 @@
+ 	sendCommand(SADD, joinParameters(key, members));
+     }
+ 
+-    public void saddx(final byte[] key, final byte[]... members) {
+-	sendCommand(SADDX, joinParameters(key, members));
+-    }
+-
+     public void smembers(final byte[] key) {
+ 	sendCommand(SMEMBERS, key);
+     }
+@@ -521,10 +387,6 @@
+ 	sendCommand(ZADD, key, toByteArray(score), member);
+     }
+ 
+-    public void zaddx(final byte[] key, final double score, final byte[] member) {
+-	sendCommand(ZADDX, key, toByteArray(score), member);
+-    }
+-
+     public void zaddBinary(final byte[] key,
+ 	    final Map<byte[], Double> scoreMembers) {
+ 
+@@ -543,24 +405,6 @@
+ 	sendCommand(ZADD, argsArray);
+     }
+ 
+-    public void zaddBinaryx(final byte[] key,
+-	    final Map<byte[], Double> scoreMembers) {
+-
+-	ArrayList<byte[]> args = new ArrayList<byte[]>(
+-		scoreMembers.size() * 2 + 1);
+-	args.add(key);
+-
+-	for (Map.Entry<byte[], Double> entry : scoreMembers.entrySet()) {
+-	    args.add(toByteArray(entry.getValue()));
+-	    args.add(entry.getKey());
+-	}
+-
+-	byte[][] argsArray = new byte[args.size()][];
+-	args.toArray(argsArray);
+-
+-	sendCommand(ZADDX, argsArray);
+-    }
+-
+     public void zrange(final byte[] key, final long start, final long end) {
+ 	sendCommand(ZRANGE, key, toByteArray(start), toByteArray(end));
+     }
+@@ -1044,10 +888,6 @@
+ 	sendCommand(LPUSHX, joinParameters(key, string));
+     }
+ 
+-    public void lpushnx(final byte[] key, final byte[]... strings) {
+-	sendCommand(LPUSHNX, joinParameters(key, strings));
+-    }
+-
+     public void persist(final byte[] key) {
+ 	sendCommand(PERSIST, key);
+     }
+@@ -1056,10 +896,6 @@
+ 	sendCommand(RPUSHX, joinParameters(key, string));
+     }
+ 
+-    public void rpushnx(final byte[] key, final byte[]... strings) {
+-	sendCommand(RPUSHNX, joinParameters(key, strings));
+-    }
+-
+     public void echo(final byte[] string) {
+ 	sendCommand(ECHO, string);
+     }
+@@ -1276,13 +1112,13 @@
+ 	sendCommand(PSETEX, key, toByteArray(milliseconds), value);
+     }
+ 
+-    public void set(final byte[] key, final byte[] value, final byte[] nxxxeq) {
+-	sendCommand(Command.SET, key, value, nxxxeq);
++    public void set(final byte[] key, final byte[] value, final byte[] nxxx) {
++	sendCommand(Command.SET, key, value, nxxx);
+     }
+ 
+-    public void set(final byte[] key, final byte[] value, final byte[] nxxxeq,
++    public void set(final byte[] key, final byte[] value, final byte[] nxxx,
+ 	    final byte[] expx, final int time) {
+-	sendCommand(Command.SET, key, value, nxxxeq, expx, toByteArray(time));
++	sendCommand(Command.SET, key, value, nxxx, expx, toByteArray(time));
+     }
+ 
+     public void srandmember(final byte[] key, final int count) {
+diff -ruN jedis-2.4.0-custom/src/main/java/redis/clients/jedis/BinaryJedisCommandsNew.java jedis-2.4.0/src/main/java/redis/clients/jedis/BinaryJedisCommandsNew.java
+--- jedis-2.4.0-custom/src/main/java/redis/clients/jedis/BinaryJedisCommandsNew.java	2014-03-06 11:59:41.000000000 +0800
++++ jedis-2.4.0/src/main/java/redis/clients/jedis/BinaryJedisCommandsNew.java	1970-01-01 08:00:00.000000000 +0800
+@@ -1,40 +0,0 @@
+-package redis.clients.jedis;
+-
+-import java.util.List;
+-import java.util.Map;
+-
+-/**
+- * Common interface for sharded and non-sharded BinaryJedis
+- */
+-public interface BinaryJedisCommandsNew {
+-
+-    Long hsetex(byte[] key, byte[] field, byte[] value);
+-
+-    Long hsetknx(byte[] key, byte[] field, byte[] value);
+-
+-    Long hsetkex(byte[] key, byte[] field, byte[] value);
+-
+-    String hmsetnx(byte[] key, Map<byte[], byte[]> hash);
+-
+-    String hmsetex(byte[] key, Map<byte[], byte[]> hash);
+-    
+-    Long hincrByex(byte[] key, byte[] field, long value);
+-    
+-    String hmincrByex(byte[] key, Map<byte[], Long> hash);
+-    
+-    String lpushltrim(byte[] key, long start, long end, byte[]... strings);
+-    
+-    String lpushxltrim(byte[] key, long start, long end, byte[]... string);
+-    
+-    List<byte[]> lfind(byte[] key, byte[] value, long num);
+-    
+-    List<byte[]> rfind(byte[] key, byte[] value, long num);
+-
+-    Long saddx(byte[] key, byte[]... member);
+-
+-    Long zaddx(byte[] key, double score, byte[] member);
+-
+-    Long lpushnx(byte[] key, byte[]... args);
+-
+-    Long rpushnx(byte[] key, byte[]... args);
+-}
+diff -ruN jedis-2.4.0-custom/src/main/java/redis/clients/jedis/BinaryJedis.java jedis-2.4.0/src/main/java/redis/clients/jedis/BinaryJedis.java
+--- jedis-2.4.0-custom/src/main/java/redis/clients/jedis/BinaryJedis.java	2014-03-06 11:59:41.000000000 +0800
++++ jedis-2.4.0/src/main/java/redis/clients/jedis/BinaryJedis.java	2014-03-06 12:01:10.000000000 +0800
+@@ -87,22 +87,19 @@
+      * 
+      * @param key
+      * @param value
+-     * @param nxxxeq
+-     *            NX|XX|EQ, 
+-     *            NX -- Only set the key if it does not already exist. 
+-     *            XX -- Only set the key if it already exist.
+-     *            EQ -- Set the value iff the key does not exist,
+-     *            		otherwise return whether the two values are equal
++     * @param nxxx
++     *            NX|XX, NX -- Only set the key if it does not already exist. XX
++     *            -- Only set the key if it already exist.
+      * @param expx
+      *            EX|PX, expire time units: EX = seconds; PX = milliseconds
+      * @param time
+      *            expire time in the units of {@param #expx}
+      * @return Status code reply
+      */
+-    public String set(final byte[] key, final byte[] value, final byte[] nxxxeq,
++    public String set(final byte[] key, final byte[] value, final byte[] nxxx,
+ 	    final byte[] expx, final long time) {
+ 	checkIsInMulti();
+-	client.set(key, value, nxxxeq, expx, time);
++	client.set(key, value, nxxx, expx, time);
+ 	return client.getStatusCodeReply();
+     }
+ 
+@@ -499,12 +496,6 @@
+ 	return client.getStatusCodeReply();
+     }
+ 
+-    public String seteq(final byte[] key, final byte[] value) {
+-	checkIsInMulti();
+-	client.seteq(key, value);
+-	return client.getStatusCodeReply();
+-    }
+-
+     /**
+      * Set the the respective keys to the respective values. MSET will replace
+      * old values with new values, while {@link #msetnx(String...) MSETNX} will
+@@ -577,40 +568,14 @@
+      * 
+      * @param key
+      * @param integer
+-     * @param xx
+-     * 			XX -- Only set the key if it already exist.
+-     * @param expx
+-     *            EX|PX, expire time units: EX = seconds; PX = milliseconds
+-     * @param time
+-     *            expire time in the units of {@param #expx}
+      * @return Integer reply, this commands will reply with the new value of key
+      *         after the increment.
+      */
+-    public Long decrBy(final byte[] key, final long integer, final byte[] xx,
+-    	    final byte[] expx, final long time) {
+-	checkIsInMulti();
+-	client.decrBy(key, integer, xx, expx, time);
+-	return client.getIntegerReply();
+-    }
+-    
+     public Long decrBy(final byte[] key, final long integer) {
+ 	checkIsInMulti();
+ 	client.decrBy(key, integer);
+ 	return client.getIntegerReply();
+     }
+-    
+-    public Long decrBy(final byte[] key, final long integer, final byte[] xx) {
+-	checkIsInMulti();
+-	client.decrBy(key, integer, xx);
+-	return client.getIntegerReply();
+-    }
+-    
+-    public Long decrBy(final byte[] key, final long integer, final byte[] expx,
+-    		final long time) {
+-	checkIsInMulti();
+-	client.decrBy(key, integer, expx, time);
+-	return client.getIntegerReply();
+-    }
+ 
+     /**
+      * Decrement the number stored at key by one. If the key does not exist or
+@@ -631,40 +596,15 @@
+      * @see #decrBy(byte[], long)
+      * 
+      * @param key
+-     * @param xx
+-     * 			XX -- Only set the key if it already exist.
+-     * @param expx
+-     *            EX|PX, expire time units: EX = seconds; PX = milliseconds
+-     * @param time
+-     *            expire time in the units of {@param #expx}
+      * @return Integer reply, this commands will reply with the new value of key
+      *         after the increment.
+      */
+-    public Long decr(final byte[] key, final byte[] xx, final byte[] expx,
+-    		final long time) {
+-	checkIsInMulti();
+-	client.decr(key, xx, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     public Long decr(final byte[] key) {
+ 	checkIsInMulti();
+ 	client.decr(key);
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long decr(final byte[] key, final byte[] xx) {
+-	checkIsInMulti();
+-	client.decr(key, xx);
+-	return client.getIntegerReply();
+-    }
+-
+-    public Long decr(final byte[] key, final byte[] expx, final long time) {
+-	checkIsInMulti();
+-	client.decr(key, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     /**
+      * INCRBY work just like {@link #incr(byte[]) INCR} but instead to increment
+      * by 1 the increment is integer.
+@@ -684,41 +624,15 @@
+      * 
+      * @param key
+      * @param integer
+-     * @param xx
+-     * 			XX -- Only set the key if it already exist.
+-     * @param expx
+-     *            EX|PX, expire time units: EX = seconds; PX = milliseconds
+-     * @param time
+-     *            expire time in the units of {@param #expx}
+      * @return Integer reply, this commands will reply with the new value of key
+      *         after the increment.
+      */
+-    public Long incrBy(final byte[] key, final long integer, final byte[] xx,
+-    	    final byte[] expx, final long time) {
+-	checkIsInMulti();
+-	client.incrBy(key, integer, xx, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     public Long incrBy(final byte[] key, final long integer) {
+ 	checkIsInMulti();
+ 	client.incrBy(key, integer);
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long incrBy(final byte[] key, final long integer, final byte[] xx) {
+-	checkIsInMulti();
+-	client.incrBy(key, integer, xx);
+-	return client.getIntegerReply();
+-    }
+-
+-    public Long incrBy(final byte[] key, final long integer, final byte[] expx,
+-    		final long time) {
+-	checkIsInMulti();
+-	client.incrBy(key, integer, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     /**
+      * Increment the number stored at key by one. If the key does not exist or
+      * contains a value of a wrong type, set the key to the value of "0" before
+@@ -738,40 +652,15 @@
+      * @see #decrBy(byte[], long)
+      * 
+      * @param key
+-     * @param xx
+-     * 			XX -- Only set the key if it already exist.
+-     * @param expx
+-     *            EX|PX, expire time units: EX = seconds; PX = milliseconds
+-     * @param time
+-     *            expire time in the units of {@param #expx}
+      * @return Integer reply, this commands will reply with the new value of key
+      *         after the increment.
+      */
+-    public Long incr(final byte[] key, final byte[] xx, final byte[] expx,
+-    		final long time) {
+-	checkIsInMulti();
+-	client.incr(key, xx, expx, time);
+-	return client.getIntegerReply();
+-    }
+-    
+     public Long incr(final byte[] key) {
+ 	checkIsInMulti();
+ 	client.incr(key);
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long incr(final byte[] key, final byte[] xx) {
+-	checkIsInMulti();
+-	client.incr(key, xx);
+-	return client.getIntegerReply();
+-    }
+-
+-    public Long incr(final byte[] key, final byte[] expx, final long time) {
+-	checkIsInMulti();
+-	client.incr(key, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     /**
+      * If the key already exists and is a string, this command appends the
+      * provided value at the end of the string. If the key does not exist it is
+@@ -874,24 +763,6 @@
+ 	client.hsetnx(key, field, value);
+ 	return client.getIntegerReply();
+     }
+-    
+-    public Long hsetex(final byte[] key, final byte[] field, final byte[] value) {
+-	checkIsInMulti();
+-	client.hsetex(key, field, value);
+-	return client.getIntegerReply();
+-    }
+-    
+-    public Long hsetknx(final byte[] key, final byte[] field, final byte[] value) {
+-	checkIsInMulti();
+-	client.hsetknx(key, field, value);
+-	return client.getIntegerReply();
+-    }
+-    
+-    public Long hsetkex(final byte[] key, final byte[] field, final byte[] value) {
+-	checkIsInMulti();
+-	client.hsetkex(key, field, value);
+-	return client.getIntegerReply();
+-    }
+ 
+     /**
+      * Set the respective fields to the respective values. HMSET replaces old
+@@ -910,18 +781,6 @@
+ 	client.hmset(key, hash);
+ 	return client.getStatusCodeReply();
+     }
+-    
+-    public String hmsetnx(final byte[] key, final Map<byte[], byte[]> hash) {
+-	checkIsInMulti();
+-	client.hmsetnx(key, hash);
+-	return client.getStatusCodeReply();
+-    }
+-    
+-    public String hmsetex(final byte[] key, final Map<byte[], byte[]> hash) {
+-	checkIsInMulti();
+-	client.hmsetex(key, hash);
+-	return client.getStatusCodeReply();
+-    }
+ 
+     /**
+      * Retrieve the values associated to the specified fields.
+@@ -966,18 +825,6 @@
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long hincrByex(final byte[] key, final byte[] field, final long value) {
+-	checkIsInMulti();
+-	client.hincrByex(key, field, value);
+-	return client.getIntegerReply();
+-    }
+-
+-    public String hmincrByex(final byte[] key, final Map<byte[], Long> hash) {
+-	checkIsInMulti();
+-	client.hmincrByex(key, hash);
+-	return client.getStatusCodeReply();
+-    }
+-
+     /**
+      * Test for existence of a specified field in a hash.
+      * 
+@@ -1219,20 +1066,6 @@
+ 	client.ltrim(key, start, end);
+ 	return client.getStatusCodeReply();
+     }
+-    
+-    public String lpushltrim(final byte[] key, final long start, final long end,
+-    		final byte[]... strings) {
+-	checkIsInMulti();
+-	client.lpushltrim(key, start, end, strings);
+-	return client.getStatusCodeReply();
+-    }
+-    
+-    public String lpushxltrim(final byte[] key, final long start, final long end,
+-    		final byte[]... string) {
+-	checkIsInMulti();
+-	client.lpushxltrim(key, start, end, string);
+-	return client.getStatusCodeReply();
+-    }
+ 
+     /**
+      * Return the specified element of the list stored at the specified key. 0
+@@ -1348,18 +1181,6 @@
+ 	return client.getBinaryBulkReply();
+     }
+ 
+-    public List<byte[]> lfind(final byte[] key, final byte[] value, final long num) {
+-	checkIsInMulti();
+-	client.lfind(key, value, num);
+-	return client.getBinaryMultiBulkReply();
+-    }
+-
+-    public List<byte[]> rfind(final byte[] key, final byte[] value, final long num) {
+-	checkIsInMulti();
+-	client.rfind(key, value, num);
+-	return client.getBinaryMultiBulkReply();
+-    }
+-
+     /**
+      * Atomically return and remove the last (tail) element of the srckey list,
+      * and push the element as the first (head) element of the dstkey list. For
+@@ -1403,12 +1224,6 @@
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long saddx(final byte[] key, final byte[]... members) {
+-	checkIsInMulti();
+-	client.saddx(key, members);
+-	return client.getIntegerReply();
+-    }
+-
+     /**
+      * Return all the members (elements) of the set value stored at key. This is
+      * just syntax glue for {@link #sinter(String...) SINTER}.
+@@ -1702,12 +1517,6 @@
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long zaddx(final byte[] key, final double score, final byte[] member) {
+-	checkIsInMulti();
+-	client.zaddx(key, score, member);
+-	return client.getIntegerReply();
+-    }
+-
+     public Long zadd(final byte[] key, final Map<byte[], Double> scoreMembers) {
+ 	checkIsInMulti();
+ 	client.zaddBinary(key, scoreMembers);
+@@ -3230,11 +3039,6 @@
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long lpushnx(final byte[] key, final byte[]... strings) {
+-	client.lpushnx(key, strings);
+-	return client.getIntegerReply();
+-    }
+-
+     /**
+      * Undo a {@link #expire(byte[], int) expire} at turning the expire key into
+      * a normal key.
+@@ -3255,11 +3059,6 @@
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long rpushnx(final byte[] key, final byte[]... strings) {
+-	client.rpushnx(key, strings);
+-	return client.getIntegerReply();
+-    }
+-
+     public byte[] echo(final byte[] string) {
+ 	client.echo(string);
+ 	return client.getBinaryBulkReply();
+@@ -3547,16 +3346,16 @@
+ 	return client.getStatusCodeReply();
+     }
+ 
+-    public String set(final byte[] key, final byte[] value, final byte[] nxxxeq) {
++    public String set(final byte[] key, final byte[] value, final byte[] nxxx) {
+ 	checkIsInMulti();
+-	client.set(key, value, nxxxeq);
++	client.set(key, value, nxxx);
+ 	return client.getStatusCodeReply();
+     }
+ 
+-    public String set(final byte[] key, final byte[] value, final byte[] nxxxeq,
++    public String set(final byte[] key, final byte[] value, final byte[] nxxx,
+ 	    final byte[] expx, final int time) {
+ 	checkIsInMulti();
+-	client.set(key, value, nxxxeq, expx, time);
++	client.set(key, value, nxxx, expx, time);
+ 	return client.getStatusCodeReply();
+     }
+ 
+diff -ruN jedis-2.4.0-custom/src/main/java/redis/clients/jedis/Client.java jedis-2.4.0/src/main/java/redis/clients/jedis/Client.java
+--- jedis-2.4.0-custom/src/main/java/redis/clients/jedis/Client.java	2014-03-06 11:59:41.000000000 +0800
++++ jedis-2.4.0/src/main/java/redis/clients/jedis/Client.java	2014-03-06 12:01:10.000000000 +0800
+@@ -10,7 +10,7 @@
+ 
+ import redis.clients.util.SafeEncoder;
+ 
+-public class Client extends BinaryClient implements Commands, CommandsNew {
++public class Client extends BinaryClient implements Commands {
+     public Client(final String host) {
+ 	super(host);
+     }
+@@ -23,10 +23,10 @@
+ 	set(SafeEncoder.encode(key), SafeEncoder.encode(value));
+     }
+ 
+-    public void set(final String key, final String value, final String nxxxeq,
++    public void set(final String key, final String value, final String nxxx,
+ 	    final String expx, final long time) {
+ 	set(SafeEncoder.encode(key), SafeEncoder.encode(value),
+-		SafeEncoder.encode(nxxxeq), SafeEncoder.encode(expx), time);
++		SafeEncoder.encode(nxxx), SafeEncoder.encode(expx), time);
+     }
+ 
+     public void get(final String key) {
+@@ -97,10 +97,6 @@
+ 	setex(SafeEncoder.encode(key), seconds, SafeEncoder.encode(value));
+     }
+ 
+-    public void seteq(final String key, final String value) {
+-	seteq(SafeEncoder.encode(key), SafeEncoder.encode(value));
+-    }
+-
+     public void mset(final String... keysvalues) {
+ 	final byte[][] bkeysvalues = new byte[keysvalues.length][];
+ 	for (int i = 0; i < keysvalues.length; i++) {
+@@ -121,76 +117,18 @@
+ 	decrBy(SafeEncoder.encode(key), integer);
+     }
+ 
+-    public void decrBy(final String key, final long integer, final String xx,
+-    	    final String expx, final long time) {
+-	decrBy(SafeEncoder.encode(key), integer, SafeEncoder.encode(xx),
+-			SafeEncoder.encode(expx), time);
+-    }
+-
+-    public void decrBy(final String key, final long integer, final String xx) {
+-	decrBy(SafeEncoder.encode(key), integer, SafeEncoder.encode(xx));
+-    }
+-
+-    public void decrBy(final String key, final long integer, final String expx,
+-    		final long time) {
+-	decrBy(SafeEncoder.encode(key), integer, SafeEncoder.encode(expx), time);
+-    }
+-
+     public void decr(final String key) {
+ 	decr(SafeEncoder.encode(key));
+     }
+ 
+-    public void decr(final String key, final String xx, final String expx,
+-    		final long time) {
+-	decr(SafeEncoder.encode(key), SafeEncoder.encode(xx),
+-			SafeEncoder.encode(expx), time);
+-    }
+-
+-    public void decr(final String key, final String xx) {
+-	decr(SafeEncoder.encode(key), SafeEncoder.encode(xx));
+-    }
+-
+-    public void decr(final String key, final String expx, final long time) {
+-	decr(SafeEncoder.encode(key), SafeEncoder.encode(expx), time);
+-    }
+-
+     public void incrBy(final String key, final long integer) {
+ 	incrBy(SafeEncoder.encode(key), integer);
+     }
+ 
+-    public void incrBy(final String key, final long integer, final String xx,
+-    	    final String expx, final long time) {
+-	incrBy(SafeEncoder.encode(key), integer, SafeEncoder.encode(xx),
+-			SafeEncoder.encode(expx), time);
+-    }
+-
+-    public void incrBy(final String key, final long integer, final String xx) {
+-	incrBy(SafeEncoder.encode(key), integer, SafeEncoder.encode(xx));
+-    }
+-
+-    public void incrBy(final String key, final long integer, final String expx,
+-    		final long time) {
+-	incrBy(SafeEncoder.encode(key), integer, SafeEncoder.encode(expx), time);
+-    }
+-
+     public void incr(final String key) {
+ 	incr(SafeEncoder.encode(key));
+     }
+ 
+-    public void incr(final String key, final String xx, final String expx,
+-    		final long time) {
+-	incr(SafeEncoder.encode(key), SafeEncoder.encode(xx),
+-			SafeEncoder.encode(expx), time);
+-    }
+-
+-    public void incr(final String key, final String xx) {
+-	incr(SafeEncoder.encode(key), SafeEncoder.encode(xx));
+-    }
+-
+-    public void incr(final String key, final String expx, final long time) {
+-	incr(SafeEncoder.encode(key), SafeEncoder.encode(expx), time);
+-    }
+-
+     public void append(final String key, final String value) {
+ 	append(SafeEncoder.encode(key), SafeEncoder.encode(value));
+     }
+@@ -213,21 +151,6 @@
+ 		SafeEncoder.encode(value));
+     }
+ 
+-    public void hsetex(final String key, final String field, final String value) {
+-	hsetex(SafeEncoder.encode(key), SafeEncoder.encode(field),
+-		SafeEncoder.encode(value));
+-    }
+-
+-    public void hsetknx(final String key, final String field, final String value) {
+-	hsetknx(SafeEncoder.encode(key), SafeEncoder.encode(field),
+-		SafeEncoder.encode(value));
+-    }
+-
+-    public void hsetkex(final String key, final String field, final String value) {
+-	hsetkex(SafeEncoder.encode(key), SafeEncoder.encode(field),
+-		SafeEncoder.encode(value));
+-    }
+-
+     public void hmset(final String key, final Map<String, String> hash) {
+ 	final Map<byte[], byte[]> bhash = new HashMap<byte[], byte[]>(
+ 		hash.size());
+@@ -238,26 +161,6 @@
+ 	hmset(SafeEncoder.encode(key), bhash);
+     }
+ 
+-    public void hmsetnx(final String key, final Map<String, String> hash) {
+-	final Map<byte[], byte[]> bhash = new HashMap<byte[], byte[]>(
+-		hash.size());
+-	for (final Entry<String, String> entry : hash.entrySet()) {
+-	    bhash.put(SafeEncoder.encode(entry.getKey()),
+-		    SafeEncoder.encode(entry.getValue()));
+-	}
+-	hmsetnx(SafeEncoder.encode(key), bhash);
+-    }
+-
+-    public void hmsetex(final String key, final Map<String, String> hash) {
+-	final Map<byte[], byte[]> bhash = new HashMap<byte[], byte[]>(
+-		hash.size());
+-	for (final Entry<String, String> entry : hash.entrySet()) {
+-	    bhash.put(SafeEncoder.encode(entry.getKey()),
+-		    SafeEncoder.encode(entry.getValue()));
+-	}
+-	hmsetex(SafeEncoder.encode(key), bhash);
+-    }
+-
+     public void hmget(final String key, final String... fields) {
+ 	final byte[][] bfields = new byte[fields.length][];
+ 	for (int i = 0; i < bfields.length; i++) {
+@@ -270,19 +173,6 @@
+ 	hincrBy(SafeEncoder.encode(key), SafeEncoder.encode(field), value);
+     }
+ 
+-    public void hincrByex(final String key, final String field, final long value) {
+-	hincrByex(SafeEncoder.encode(key), SafeEncoder.encode(field), value);
+-    }
+-
+-    public void hmincrByex(final String key, final Map<String, Long> hash) {
+-	final Map<byte[], Long> bhash = new HashMap<byte[], Long>(
+-		hash.size());
+-	for (final Entry<String, Long> entry : hash.entrySet()) {
+-	    bhash.put(SafeEncoder.encode(entry.getKey()), entry.getValue());
+-	}
+-	hmincrByex(SafeEncoder.encode(key), bhash);
+-    }
+-
+     public void hexists(final String key, final String field) {
+ 	hexists(SafeEncoder.encode(key), SafeEncoder.encode(field));
+     }
+@@ -327,18 +217,6 @@
+ 	ltrim(SafeEncoder.encode(key), start, end);
+     }
+ 
+-    public void lpushltrim(final String key, final long start, final long end,
+-    		final String... strings) {
+-	lpushltrim(SafeEncoder.encode(key), start, end,
+-			SafeEncoder.encodeMany(strings));
+-    }
+-
+-    public void lpushxltrim(final String key, final long start, final long end,
+-    		final String... string) {
+-	lpushxltrim(SafeEncoder.encode(key), start, end,
+-			getByteParams(string));
+-    }
+-
+     public void lindex(final String key, final long index) {
+ 	lindex(SafeEncoder.encode(key), index);
+     }
+@@ -359,14 +237,6 @@
+ 	rpop(SafeEncoder.encode(key));
+     }
+ 
+-    public void lfind(final String key, final String value, final long num) {
+-	lfind(SafeEncoder.encode(key), SafeEncoder.encode(value), num);
+-    }
+-
+-    public void rfind(final String key, final String value, final long num) {
+-	rfind(SafeEncoder.encode(key), SafeEncoder.encode(value), num);
+-    }
+-
+     public void rpoplpush(final String srckey, final String dstkey) {
+ 	rpoplpush(SafeEncoder.encode(srckey), SafeEncoder.encode(dstkey));
+     }
+@@ -375,10 +245,6 @@
+ 	sadd(SafeEncoder.encode(key), SafeEncoder.encodeMany(members));
+     }
+ 
+-    public void saddx(final String key, final String... members) {
+-	saddx(SafeEncoder.encode(key), SafeEncoder.encodeMany(members));
+-    }
+-
+     public void smembers(final String key) {
+ 	smembers(SafeEncoder.encode(key));
+     }
+@@ -461,10 +327,6 @@
+ 	zadd(SafeEncoder.encode(key), score, SafeEncoder.encode(member));
+     }
+ 
+-    public void zaddx(final String key, final double score, final String member) {
+-	zaddx(SafeEncoder.encode(key), score, SafeEncoder.encode(member));
+-    }
+-
+     public void zrange(final String key, final long start, final long end) {
+ 	zrange(SafeEncoder.encode(key), start, end);
+     }
+@@ -732,10 +594,6 @@
+ 	lpushx(SafeEncoder.encode(key), getByteParams(string));
+     }
+ 
+-    public void lpushnx(final String key, final String... strings) {
+-	lpushnx(SafeEncoder.encode(key), getByteParams(strings));
+-    }
+-
+     public void persist(final String key) {
+ 	persist(SafeEncoder.encode(key));
+     }
+@@ -744,10 +602,6 @@
+ 	rpushx(SafeEncoder.encode(key), getByteParams(string));
+     }
+ 
+-    public void rpushnx(final String key, final String... strings) {
+-	rpushnx(SafeEncoder.encode(key), getByteParams(strings));
+-    }
+-
+     public void echo(final String string) {
+ 	echo(SafeEncoder.encode(string));
+     }
+@@ -882,19 +736,6 @@
+ 	zaddBinary(SafeEncoder.encode(key), binaryScoreMembers);
+     }
+ 
+-    public void zaddx(String key, Map<String, Double> scoreMembers) {
+-
+-	HashMap<byte[], Double> binaryScoreMembers = new HashMap<byte[], Double>();
+-
+-	for (Map.Entry<String, Double> entry : scoreMembers.entrySet()) {
+-
+-	    binaryScoreMembers.put(SafeEncoder.encode(entry.getKey()),
+-		    entry.getValue());
+-	}
+-
+-	zaddBinaryx(SafeEncoder.encode(key), binaryScoreMembers);
+-    }
+-
+     public void objectRefcount(String key) {
+ 	objectRefcount(SafeEncoder.encode(key));
+     }
+@@ -957,15 +798,15 @@
+ 	psetex(SafeEncoder.encode(key), milliseconds, SafeEncoder.encode(value));
+     }
+ 
+-    public void set(final String key, final String value, final String nxxxeq) {
++    public void set(final String key, final String value, final String nxxx) {
+ 	set(SafeEncoder.encode(key), SafeEncoder.encode(value),
+-		SafeEncoder.encode(nxxxeq));
++		SafeEncoder.encode(nxxx));
+     }
+ 
+-    public void set(final String key, final String value, final String nxxxeq,
++    public void set(final String key, final String value, final String nxxx,
+ 	    final String expx, final int time) {
+ 	set(SafeEncoder.encode(key), SafeEncoder.encode(value),
+-		SafeEncoder.encode(nxxxeq), SafeEncoder.encode(expx), time);
++		SafeEncoder.encode(nxxx), SafeEncoder.encode(expx), time);
+     }
+ 
+     public void srandmember(final String key, final int count) {
+diff -ruN jedis-2.4.0-custom/src/main/java/redis/clients/jedis/Commands.java jedis-2.4.0/src/main/java/redis/clients/jedis/Commands.java
+--- jedis-2.4.0-custom/src/main/java/redis/clients/jedis/Commands.java	2014-03-06 11:59:41.000000000 +0800
++++ jedis-2.4.0/src/main/java/redis/clients/jedis/Commands.java	2014-03-06 12:01:10.000000000 +0800
+@@ -8,7 +8,7 @@
+ 
+     public void set(final String key, final String value);
+ 
+-    public void set(final String key, final String value, final String nxxxeq,
++    public void set(final String key, final String value, final String nxxx,
+ 	    final String expx, final long time);
+ 
+     public void get(final String key);
+diff -ruN jedis-2.4.0-custom/src/main/java/redis/clients/jedis/CommandsNew.java jedis-2.4.0/src/main/java/redis/clients/jedis/CommandsNew.java
+--- jedis-2.4.0-custom/src/main/java/redis/clients/jedis/CommandsNew.java	2014-03-06 11:59:41.000000000 +0800
++++ jedis-2.4.0/src/main/java/redis/clients/jedis/CommandsNew.java	1970-01-01 08:00:00.000000000 +0800
+@@ -1,54 +0,0 @@
+-package redis.clients.jedis;
+-
+-import java.util.Map;
+-
+-public interface CommandsNew {
+-
+-    public void seteq(final String key, final String value);
+-
+-    public void decrBy(final String key, final long integer, final String xx,
+-    	    final String expx, final long time);
+-
+-    public void decr(final String key, final String xx, final String expx,
+-    		final long time);
+-
+-    public void incrBy(final String key, final long integer, final String xx,
+-    	    final String expx, final long time);
+-
+-    public void incr(final String key, final String xx, final String expx,
+-    		final long time);
+-
+-    public void hsetex(final String key, final String field, final String value);
+-
+-    public void hsetknx(final String key, final String field, final String value);
+-
+-    public void hsetkex(final String key, final String field, final String value);
+-    
+-    public void hmsetnx(final String key, final Map<String, String> hash);
+-    
+-    public void hmsetex(final String key, final Map<String, String> hash);
+-    
+-    public void hincrByex(final String key, final String field, final long value);
+-    
+-    public void hmincrByex(final String key, final Map<String, Long> hash);
+-    
+-    public void lpushltrim(final String key, final long start, final long end,
+-    		final String... strings);
+-    
+-    public void lpushxltrim(final String key, final long start, final long end,
+-    		final String... string);
+-    
+-    public void lfind(final String key, final String value, final long num);
+-    
+-    public void rfind(final String key, final String value, final long num);
+-
+-    public void saddx(final String key, final String... members);
+-
+-    public void zaddx(final String key, final double score, final String member);
+-
+-    public void zaddx(final String key, final Map<String, Double> scoreMembers);
+-
+-    public void lpushnx(final String key, final String... strings);
+-
+-    public void rpushnx(final String key, final String... strings);
+-}
+diff -ruN jedis-2.4.0-custom/src/main/java/redis/clients/jedis/Connection.java jedis-2.4.0/src/main/java/redis/clients/jedis/Connection.java
+--- jedis-2.4.0-custom/src/main/java/redis/clients/jedis/Connection.java	2014-03-06 11:59:41.000000000 +0800
++++ jedis-2.4.0/src/main/java/redis/clients/jedis/Connection.java	2014-03-06 12:01:10.000000000 +0800
+@@ -172,11 +172,7 @@
+     protected String getStatusCodeReply() {
+ 	flush();
+ 	pipelinedCommands--;
+-	Object o = Protocol.read(inputStream);	// Convert error if long type 
+-	if (o instanceof Long) {
+-	    return Long.toString((Long) o);
+-	}
+-	final byte[] resp = (byte[]) o;
++	final byte[] resp = (byte[]) Protocol.read(inputStream);
+ 	if (null == resp) {
+ 	    return null;
+ 	} else {
+diff -ruN jedis-2.4.0-custom/src/main/java/redis/clients/jedis/JedisCommandsNew.java jedis-2.4.0/src/main/java/redis/clients/jedis/JedisCommandsNew.java
+--- jedis-2.4.0-custom/src/main/java/redis/clients/jedis/JedisCommandsNew.java	2014-03-06 11:59:41.000000000 +0800
++++ jedis-2.4.0/src/main/java/redis/clients/jedis/JedisCommandsNew.java	1970-01-01 08:00:00.000000000 +0800
+@@ -1,42 +0,0 @@
+-package redis.clients.jedis;
+-
+-import java.util.List;
+-import java.util.Map;
+-
+-/**
+- * Common interface for sharded and non-sharded Jedis
+- */
+-public interface JedisCommandsNew {
+-
+-    Long hsetex(String key, String field, String value);
+-
+-    Long hsetknx(String key, String field, String value);
+-
+-    Long hsetkex(String key, String field, String value);
+-
+-    String hmsetnx(String key, Map<String, String> hash);
+-
+-    String hmsetex(String key, Map<String, String> hash);
+-    
+-    Long hincrByex(String key, String field, long value);
+-    
+-    String hmincrByex(String key, Map<String, Long> hash);
+-    
+-    String lpushltrim(String key, long start, long end, String... strings);
+-    
+-    String lpushxltrim(String key, long start, long end, String... string);
+-    
+-    List<String> lfind(String key, String value, long num);
+-    
+-    List<String> rfind(String key, String value, long num);
+-
+-    Long saddx(String key, String... member);
+-
+-    Long zaddx(String key, double score, String member);
+-
+-    Long zaddx(String key, Map<String, Double> scoreMembers);
+-
+-    Long lpushnx(String key, String... strings);
+-
+-    Long rpushnx(String key, String... strings);
+-}
+diff -ruN jedis-2.4.0-custom/src/main/java/redis/clients/jedis/Jedis.java jedis-2.4.0/src/main/java/redis/clients/jedis/Jedis.java
+--- jedis-2.4.0-custom/src/main/java/redis/clients/jedis/Jedis.java	2014-03-06 11:59:41.000000000 +0800
++++ jedis-2.4.0/src/main/java/redis/clients/jedis/Jedis.java	2014-03-06 12:01:10.000000000 +0800
+@@ -16,8 +16,8 @@
+ import redis.clients.util.Slowlog;
+ 
+ public class Jedis extends BinaryJedis implements JedisCommands,
+-	JedisCommandsNew, MultiKeyCommands, AdvancedJedisCommands,
+-	ScriptingCommands, BasicCommands, ClusterCommands {
++	MultiKeyCommands, AdvancedJedisCommands, ScriptingCommands,
++	BasicCommands, ClusterCommands {
+     public Jedis(final String host) {
+ 	super(host);
+     }
+@@ -61,21 +61,18 @@
+      * @param key
+      * @param value
+      * @param nxxx
+-     *            NX|XX|EQ,
+-     *            NX -- Only set the key if it does not already exist.
+-     *            XX -- Only set the key if it already exist.
+-     *            EQ -- Set the value iff the key does not exist,
+-     *            		otherwise return whether the two values are equal
++     *            NX|XX, NX -- Only set the key if it does not already exist. XX
++     *            -- Only set the key if it already exist.
+      * @param expx
+      *            EX|PX, expire time units: EX = seconds; PX = milliseconds
+      * @param time
+      *            expire time in the units of {@param #expx}
+      * @return Status code reply
+      */
+-    public String set(final String key, final String value, final String nxxxeq,
++    public String set(final String key, final String value, final String nxxx,
+ 	    final String expx, final long time) {
+ 	checkIsInMulti();
+-	client.set(key, value, nxxxeq, expx, time);
++	client.set(key, value, nxxx, expx, time);
+ 	return client.getStatusCodeReply();
+     }
+ 
+@@ -412,12 +409,6 @@
+ 	client.setex(key, seconds, value);
+ 	return client.getStatusCodeReply();
+     }
+-    
+-    public String seteq(final String key, final String value) {
+-	checkIsInMulti();
+-	client.seteq(key, value);
+-	return client.getStatusCodeReply();
+-    }
+ 
+     /**
+      * Set the the respective keys to the respective values. MSET will replace
+@@ -491,41 +482,15 @@
+      * 
+      * @param key
+      * @param integer
+-     * @param xx
+-     * 			XX -- Only set the key if it already exist.
+-     * @param expx
+-     *            EX|PX, expire time units: EX = seconds; PX = milliseconds
+-     * @param time
+-     *            expire time in the units of {@param #expx}
+      * @return Integer reply, this commands will reply with the new value of key
+      *         after the increment.
+      */
+-    public Long decrBy(final String key, final long integer, final String xx,
+-    	    final String expx, final long time) {
+-	checkIsInMulti();
+-	client.decrBy(key, integer, xx, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     public Long decrBy(final String key, final long integer) {
+ 	checkIsInMulti();
+ 	client.decrBy(key, integer);
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long decrBy(final String key, final long integer, final String xx) {
+-	checkIsInMulti();
+-	client.decrBy(key, integer, xx);
+-	return client.getIntegerReply();
+-    }
+-
+-    public Long decrBy(final String key, final long integer, final String expx,
+-    		final long time) {
+-	checkIsInMulti();
+-	client.decrBy(key, integer, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     /**
+      * Decrement the number stored at key by one. If the key does not exist or
+      * contains a value of a wrong type, set the key to the value of "0" before
+@@ -545,40 +510,15 @@
+      * @see #decrBy(String, long)
+      * 
+      * @param key
+-     * @param xx
+-     * 			XX -- Only set the key if it already exist.
+-     * @param expx
+-     *            EX|PX, expire time units: EX = seconds; PX = milliseconds
+-     * @param time
+-     *            expire time in the units of {@param #expx}
+      * @return Integer reply, this commands will reply with the new value of key
+      *         after the increment.
+      */
+-    public Long decr(final String key, final String xx, final String expx,
+-    		final long time) {
+-	checkIsInMulti();
+-	client.decr(key, xx, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     public Long decr(final String key) {
+ 	checkIsInMulti();
+ 	client.decr(key);
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long decr(final String key, final String xx) {
+-	checkIsInMulti();
+-	client.decr(key, xx);
+-	return client.getIntegerReply();
+-    }
+-
+-    public Long decr(final String key, final String expx, final long time) {
+-	checkIsInMulti();
+-	client.decr(key, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     /**
+      * INCRBY work just like {@link #incr(String) INCR} but instead to increment
+      * by 1 the increment is integer.
+@@ -598,41 +538,15 @@
+      * 
+      * @param key
+      * @param integer
+-     * @param xx
+-     * 			XX -- Only set the key if it already exist.
+-     * @param expx
+-     *            EX|PX, expire time units: EX = seconds; PX = milliseconds
+-     * @param time
+-     *            expire time in the units of {@param #expx}
+      * @return Integer reply, this commands will reply with the new value of key
+      *         after the increment.
+      */
+-    public Long incrBy(final String key, final long integer, final String xx,
+-    	    final String expx, final long time) {
+-	checkIsInMulti();
+-	client.incrBy(key, integer, xx, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     public Long incrBy(final String key, final long integer) {
+ 	checkIsInMulti();
+ 	client.incrBy(key, integer);
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long incrBy(final String key, final long integer, final String xx) {
+-	checkIsInMulti();
+-	client.incrBy(key, integer, xx);
+-	return client.getIntegerReply();
+-    }
+-
+-    public Long incrBy(final String key, final long integer, final String expx,
+-    		final long time) {
+-	checkIsInMulti();
+-	client.incrBy(key, integer, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     /**
+      * Increment the number stored at key by one. If the key does not exist or
+      * contains a value of a wrong type, set the key to the value of "0" before
+@@ -652,40 +566,15 @@
+      * @see #decrBy(String, long)
+      * 
+      * @param key
+-     * @param xx
+-     * 			XX -- Only set the key if it already exist.
+-     * @param expx
+-     *            EX|PX, expire time units: EX = seconds; PX = milliseconds
+-     * @param time
+-     *            expire time in the units of {@param #expx}
+      * @return Integer reply, this commands will reply with the new value of key
+      *         after the increment.
+      */
+-    public Long incr(final String key, final String xx, final String expx,
+-    		final long time) {
+-	checkIsInMulti();
+-	client.incr(key, xx, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     public Long incr(final String key) {
+ 	checkIsInMulti();
+ 	client.incr(key);
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long incr(final String key, final String xx) {
+-	checkIsInMulti();
+-	client.incr(key, xx);
+-	return client.getIntegerReply();
+-    }
+-
+-    public Long incr(final String key, final String expx, final long time) {
+-	checkIsInMulti();
+-	client.incr(key, expx, time);
+-	return client.getIntegerReply();
+-    }
+-
+     /**
+      * If the key already exists and is a string, this command appends the
+      * provided value at the end of the string. If the key does not exist it is
+@@ -789,24 +678,6 @@
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long hsetex(final String key, final String field, final String value) {
+-	checkIsInMulti();
+-	client.hsetex(key, field, value);
+-	return client.getIntegerReply();
+-    }
+-
+-    public Long hsetknx(final String key, final String field, final String value) {
+-	checkIsInMulti();
+-	client.hsetknx(key, field, value);
+-	return client.getIntegerReply();
+-    }
+-
+-    public Long hsetkex(final String key, final String field, final String value) {
+-	checkIsInMulti();
+-	client.hsetkex(key, field, value);
+-	return client.getIntegerReply();
+-    }
+-
+     /**
+      * Set the respective fields to the respective values. HMSET replaces old
+      * values with new values.
+@@ -825,18 +696,6 @@
+ 	return client.getStatusCodeReply();
+     }
+ 
+-    public String hmsetnx(final String key, final Map<String, String> hash) {
+-	checkIsInMulti();
+-	client.hmsetnx(key, hash);
+-	return client.getStatusCodeReply();
+-    }
+-
+-    public String hmsetex(final String key, final Map<String, String> hash) {
+-	checkIsInMulti();
+-	client.hmsetex(key, hash);
+-	return client.getStatusCodeReply();
+-    }
+-
+     /**
+      * Retrieve the values associated to the specified fields.
+      * <p>
+@@ -879,18 +738,6 @@
+ 	client.hincrBy(key, field, value);
+ 	return client.getIntegerReply();
+     }
+-    
+-    public Long hincrByex(final String key, final String field, final long value) {
+-	checkIsInMulti();
+-	client.hincrByex(key, field, value);
+-	return client.getIntegerReply();
+-    }
+-
+-    public String hmincrByex(final String key, final Map<String, Long> hash) {
+-	checkIsInMulti();
+-	client.hmincrByex(key, hash);
+-	return client.getStatusCodeReply();
+-    }
+ 
+     /**
+      * Test for existence of a specified field in a hash.
+@@ -1123,20 +970,6 @@
+ 	client.ltrim(key, start, end);
+ 	return client.getStatusCodeReply();
+     }
+-    
+-    public String lpushltrim(final String key, final long start, final long end,
+-    		final String... strings) {
+-	checkIsInMulti();
+-	client.lpushltrim(key, start, end, strings);
+-	return client.getStatusCodeReply();
+-    }
+-    
+-    public String lpushxltrim(final String key, final long start, final long end,
+-    		final String... string) {
+-	checkIsInMulti();
+-	client.lpushxltrim(key, start, end, string);
+-	return client.getStatusCodeReply();
+-    }
+ 
+     /**
+      * Return the specified element of the list stored at the specified key. 0
+@@ -1251,18 +1084,6 @@
+ 	client.rpop(key);
+ 	return client.getBulkReply();
+     }
+-    
+-    public List<String> lfind(final String key, final String value, final long num) {
+-	checkIsInMulti();
+-	client.lfind(key, value, num);
+-	return client.getMultiBulkReply();
+-    }
+-    
+-    public List<String> rfind(final String key, final String value, final long num) {
+-	checkIsInMulti();
+-	client.rfind(key, value, num);
+-	return client.getMultiBulkReply();
+-    }
+ 
+     /**
+      * Atomically return and remove the last (tail) element of the srckey list,
+@@ -1306,12 +1127,6 @@
+ 	client.sadd(key, members);
+ 	return client.getIntegerReply();
+     }
+-    
+-    public Long saddx(final String key, final String... members) {
+-	checkIsInMulti();
+-	client.saddx(key, members);
+-	return client.getIntegerReply();
+-    }
+ 
+     /**
+      * Return all the members (elements) of the set value stored at key. This is
+@@ -1604,12 +1419,6 @@
+ 	checkIsInMulti();
+ 	client.zadd(key, score, member);
+ 	return client.getIntegerReply();
+-    }    
+-
+-    public Long zaddx(final String key, final double score, final String member) {
+-	checkIsInMulti();
+-	client.zaddx(key, score, member);
+-	return client.getIntegerReply();
+     }
+ 
+     public Long zadd(final String key, final Map<String, Double> scoreMembers) {
+@@ -1618,12 +1427,6 @@
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long zaddx(final String key, final Map<String, Double> scoreMembers) {
+-	checkIsInMulti();
+-	client.zaddx(key, scoreMembers);
+-	return client.getIntegerReply();
+-    }
+-
+     public Set<String> zrange(final String key, final long start, final long end) {
+ 	checkIsInMulti();
+ 	client.zrange(key, start, end);
+@@ -2769,11 +2572,6 @@
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long lpushnx(final String key, final String... strings) {
+-	client.lpushnx(key, strings);
+-	return client.getIntegerReply();
+-    }
+-
+     /**
+      * Undo a {@link #expire(String, int) expire} at turning the expire key into
+      * a normal key.
+@@ -2794,11 +2592,6 @@
+ 	return client.getIntegerReply();
+     }
+ 
+-    public Long rpushnx(final String key, final String... strings) {
+-	client.rpushnx(key, strings);
+-	return client.getIntegerReply();
+-    }
+-
+     public String echo(final String string) {
+ 	client.echo(string);
+ 	return client.getBulkReply();
+@@ -3299,16 +3092,16 @@
+ 	return client.getStatusCodeReply();
+     }
+ 
+-    public String set(final String key, final String value, final String nxxxeq) {
++    public String set(final String key, final String value, final String nxxx) {
+ 	checkIsInMulti();
+-	client.set(key, value, nxxxeq);
++	client.set(key, value, nxxx);
+ 	return client.getStatusCodeReply();
+     }
+ 
+-    public String set(final String key, final String value, final String nxxxeq,
++    public String set(final String key, final String value, final String nxxx,
+ 	    final String expx, final int time) {
+ 	checkIsInMulti();
+-	client.set(key, value, nxxxeq, expx, time);
++	client.set(key, value, nxxx, expx, time);
+ 	return client.getStatusCodeReply();
+     }
+ 
+diff -ruN jedis-2.4.0-custom/src/main/java/redis/clients/jedis/Protocol.java jedis-2.4.0/src/main/java/redis/clients/jedis/Protocol.java
+--- jedis-2.4.0-custom/src/main/java/redis/clients/jedis/Protocol.java	2014-03-06 11:59:41.000000000 +0800
++++ jedis-2.4.0/src/main/java/redis/clients/jedis/Protocol.java	2014-03-06 12:01:10.000000000 +0800
+@@ -204,7 +204,7 @@
+     }
+ 
+     public static enum Command {
+-	PING, SET, GET, QUIT, EXISTS, DEL, TYPE, FLUSHDB, KEYS, RANDOMKEY, RENAME, RENAMENX, RENAMEX, DBSIZE, EXPIRE, EXPIREAT, TTL, SELECT, MOVE, FLUSHALL, GETSET, MGET, SETNX, SETEX, SETEQ, MSET, MSETNX, DECRBY, DECR, INCRBY, INCR, APPEND, SUBSTR, HSET, HGET, HSETNX, HSETEX, HSETKNX, HSETKEX, HMSET, HMSETNX, HMSETEX, HMGET, HINCRBY, HINCRBYEX, HMINCRBYEX, HEXISTS, HDEL, HLEN, HKEYS, HVALS, HGETALL, RPUSH, LPUSH, LLEN, LRANGE, LTRIM, LPUSHLTRIM, LPUSHXLTRIM, LINDEX, LSET, LREM, LPOP, RPOP, LFIND, RFIND, RPOPLPUSH, SADD, SADDX, SMEMBERS, SREM, SPOP, SMOVE, SCARD, SISMEMBER, SINTER, SINTERSTORE, SUNION, SUNIONSTORE, SDIFF, SDIFFSTORE, SRANDMEMBER, ZADD, ZADDX, ZRANGE, ZREM, ZINCRBY, ZRANK, ZREVRANK, ZREVRANGE, ZCARD, ZSCORE, MULTI, DISCARD, EXEC, WATCH, UNWATCH, SORT, BLPOP, BRPOP, AUTH, SUBSCRIBE, PUBLISH, UNSUBSCRIBE, PSUBSCRIBE, PUNSUBSCRIBE, PUBSUB, ZCOUNT, ZRANGEBYSCORE, ZREVRANGEBYSCORE, ZREMRANGEBYRANK, ZREMRANGEBYSCORE, ZUNIONSTORE, ZINTERSTORE, SAVE, BGSAVE, BGREWRITEAOF, LASTSAVE, SHUTDOWN, INFO, MONITOR, SLAVEOF, CONFIG, STRLEN, SYNC, LPUSHX, LPUSHNX, PERSIST, RPUSHX, RPUSHNX, ECHO, LINSERT, DEBUG, BRPOPLPUSH, SETBIT, GETBIT, SETRANGE, GETRANGE, EVAL, EVALSHA, SCRIPT, SLOWLOG, OBJECT, BITCOUNT, BITOP, SENTINEL, DUMP, RESTORE, PEXPIRE, PEXPIREAT, PTTL, INCRBYFLOAT, PSETEX, CLIENT, TIME, MIGRATE, HINCRBYFLOAT, SCAN, HSCAN, SSCAN, ZSCAN, WAIT, CLUSTER, ASKING;
++	PING, SET, GET, QUIT, EXISTS, DEL, TYPE, FLUSHDB, KEYS, RANDOMKEY, RENAME, RENAMENX, RENAMEX, DBSIZE, EXPIRE, EXPIREAT, TTL, SELECT, MOVE, FLUSHALL, GETSET, MGET, SETNX, SETEX, MSET, MSETNX, DECRBY, DECR, INCRBY, INCR, APPEND, SUBSTR, HSET, HGET, HSETNX, HMSET, HMGET, HINCRBY, HEXISTS, HDEL, HLEN, HKEYS, HVALS, HGETALL, RPUSH, LPUSH, LLEN, LRANGE, LTRIM, LINDEX, LSET, LREM, LPOP, RPOP, RPOPLPUSH, SADD, SMEMBERS, SREM, SPOP, SMOVE, SCARD, SISMEMBER, SINTER, SINTERSTORE, SUNION, SUNIONSTORE, SDIFF, SDIFFSTORE, SRANDMEMBER, ZADD, ZRANGE, ZREM, ZINCRBY, ZRANK, ZREVRANK, ZREVRANGE, ZCARD, ZSCORE, MULTI, DISCARD, EXEC, WATCH, UNWATCH, SORT, BLPOP, BRPOP, AUTH, SUBSCRIBE, PUBLISH, UNSUBSCRIBE, PSUBSCRIBE, PUNSUBSCRIBE, PUBSUB, ZCOUNT, ZRANGEBYSCORE, ZREVRANGEBYSCORE, ZREMRANGEBYRANK, ZREMRANGEBYSCORE, ZUNIONSTORE, ZINTERSTORE, SAVE, BGSAVE, BGREWRITEAOF, LASTSAVE, SHUTDOWN, INFO, MONITOR, SLAVEOF, CONFIG, STRLEN, SYNC, LPUSHX, PERSIST, RPUSHX, ECHO, LINSERT, DEBUG, BRPOPLPUSH, SETBIT, GETBIT, SETRANGE, GETRANGE, EVAL, EVALSHA, SCRIPT, SLOWLOG, OBJECT, BITCOUNT, BITOP, SENTINEL, DUMP, RESTORE, PEXPIRE, PEXPIREAT, PTTL, INCRBYFLOAT, PSETEX, CLIENT, TIME, MIGRATE, HINCRBYFLOAT, SCAN, HSCAN, SSCAN, ZSCAN, WAIT, CLUSTER, ASKING;
+ 
+ 	public final byte[] raw;
+ 
+diff -ruN jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/ClusterCommandsTest.java jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/ClusterCommandsTest.java
+--- jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/ClusterCommandsTest.java	1970-01-01 08:00:00.000000000 +0800
++++ jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/ClusterCommandsTest.java	2014-03-06 12:01:09.000000000 +0800
+@@ -0,0 +1,143 @@
++package redis.clients.jedis.tests.commands;
++
++import java.util.List;
++
++import org.junit.After;
++import org.junit.AfterClass;
++import org.junit.Before;
++import org.junit.Test;
++
++import redis.clients.jedis.HostAndPort;
++import redis.clients.jedis.Jedis;
++import redis.clients.jedis.exceptions.JedisDataException;
++import redis.clients.jedis.tests.HostAndPortUtil;
++import redis.clients.jedis.tests.JedisTestBase;
++
++public class ClusterCommandsTest extends JedisTestBase {
++    private static Jedis node1;
++    private static Jedis node2;
++
++    private HostAndPort nodeInfo1 = HostAndPortUtil.getClusterServers().get(0);
++    private HostAndPort nodeInfo2 = HostAndPortUtil.getClusterServers().get(1);
++
++    @Before
++    public void setUp() throws Exception {
++
++	node1 = new Jedis(nodeInfo1.getHost(), nodeInfo1.getPort());
++	node1.connect();
++	node1.flushAll();
++
++	node2 = new Jedis(nodeInfo2.getHost(), nodeInfo2.getPort());
++	node2.connect();
++	node2.flushAll();
++    }
++
++    @After
++    public void tearDown() {
++	node1.disconnect();
++	node2.disconnect();
++    }
++
++    @AfterClass
++    public static void removeSlots() throws InterruptedException {
++	// This is to wait for gossip to replicate data.
++	waitForEqualClusterSize();
++	String[] nodes = node1.clusterNodes().split("\n");
++	String node1Id = nodes[0].split(" ")[0];
++	node1.clusterDelSlots(1, 2, 3, 4, 5, 500);
++	node1.clusterSetSlotNode(5000, node1Id);
++	node1.clusterDelSlots(5000, 10000);
++	node2.clusterDelSlots(6000, 1, 2, 3, 4, 5, 500, 5000);
++	node1.clusterAddSlots(6000);
++	node1.clusterDelSlots(6000);
++	try {
++	    node2.clusterDelSlots(10000);
++	} catch (JedisDataException jde) {
++	    // Do nothing, slot may or may not be assigned depending on gossip
++	}
++    }
++
++    private static void waitForEqualClusterSize() throws InterruptedException {
++	boolean notEqualSize = true;
++	while (notEqualSize) {
++	    notEqualSize = getClusterAttribute(node1.clusterInfo(),
++		    "cluster_known_nodes") == getClusterAttribute(
++		    node2.clusterInfo(), "cluster_size") ? false : true;
++	}
++    }
++
++    private static int getClusterAttribute(String clusterInfo,
++	    String attributeName) {
++	for (String infoElement : clusterInfo.split("\n")) {
++	    if (infoElement.contains(attributeName)) {
++		return Integer.valueOf(infoElement.split(":")[1].trim());
++	    }
++	}
++	return 0;
++    }
++    
++    @Test
++    public void clusterSetSlotImporting() {
++	node2.clusterAddSlots(6000);
++	String[] nodes = node1.clusterNodes().split("\n");
++	String nodeId = nodes[0].split(" ")[0];
++	String status = node1.clusterSetSlotImporting(6000, nodeId);
++	assertEquals("OK", status);
++    }
++
++    @Test
++    public void clusterNodes() {
++	String nodes = node1.clusterNodes();
++	assertTrue(nodes.split("\n").length > 0);
++    }
++
++    @Test
++    public void clusterMeet() {
++	String status = node1.clusterMeet("127.0.0.1", nodeInfo2.getPort());
++	assertEquals("OK", status);
++    }
++
++    @Test
++    public void clusterAddSlots() {
++	String status = node1.clusterAddSlots(1, 2, 3, 4, 5);
++	assertEquals("OK", status);
++    }
++
++    @Test
++    public void clusterDelSlots() {
++	node1.clusterAddSlots(900);
++	String status = node1.clusterDelSlots(900);
++	assertEquals("OK", status);
++    }
++
++    @Test
++    public void clusterInfo() {
++	String info = node1.clusterInfo();
++	assertNotNull(info);
++    }
++
++    @Test
++    public void clusterGetKeysInSlot() {
++	node1.clusterAddSlots(500);
++	List<String> keys = node1.clusterGetKeysInSlot(500, 1);
++	assertEquals(0, keys.size());
++    }
++
++    @Test
++    public void clusterSetSlotNode() {
++	String[] nodes = node1.clusterNodes().split("\n");
++	String nodeId = nodes[0].split(" ")[0];
++	String status = node1.clusterSetSlotNode(10000, nodeId);
++	assertEquals("OK", status);
++    }
++
++    @Test
++    public void clusterSetSlotMigrating() {
++	node1.clusterAddSlots(5000);
++	String[] nodes = node1.clusterNodes().split("\n");
++	String nodeId = nodes[0].split(" ")[0];
++	String status = node1.clusterSetSlotMigrating(5000, nodeId);
++	assertEquals("OK", status);
++    }
++
++}
+\ No newline at end of file
+diff -ruN jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/ControlCommandsTest.java jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/ControlCommandsTest.java
+--- jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/ControlCommandsTest.java	2014-03-06 11:59:40.000000000 +0800
++++ jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/ControlCommandsTest.java	2014-03-06 12:01:09.000000000 +0800
+@@ -118,7 +118,7 @@
+ 	assertNotNull(resp);
+     }
+ 
+-    //@Test
++    @Test
+     public void waitReplicas() {
+ 	Long replicas = jedis.waitReplicas(1, 100);
+ 	assertEquals(1, replicas.longValue());
+diff -ruN jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/HashesCommandsTest.java jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/HashesCommandsTest.java
+--- jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/HashesCommandsTest.java	2014-03-06 11:59:40.000000000 +0800
++++ jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/HashesCommandsTest.java	2014-03-06 12:01:09.000000000 +0800
+@@ -1,7 +1,5 @@
+ package redis.clients.jedis.tests.commands;
+ 
+-import static redis.clients.jedis.ScanParams.SCAN_POINTER_START;
+-
+ import java.util.ArrayList;
+ import java.util.HashMap;
+ import java.util.LinkedHashMap;
+@@ -14,20 +12,12 @@
+ 
+ import redis.clients.jedis.ScanParams;
+ import redis.clients.jedis.ScanResult;
++import static redis.clients.jedis.ScanParams.SCAN_POINTER_START;
+ 
+ public class HashesCommandsTest extends JedisCommandTestBase {
+     final byte[] bfoo = { 0x01, 0x02, 0x03, 0x04 };
+     final byte[] bbar = { 0x05, 0x06, 0x07, 0x08 };
+     final byte[] bcar = { 0x09, 0x0A, 0x0B, 0x0C };
+-    final byte[] b0 = { 0x00 };
+-    final byte[] b1 = { 0x01 };
+-    final byte[] b2 = { 0x02 };
+-    final byte[] b3 = { 0x03 };
+-    final byte[] b4 = { 0x04 };
+-    final byte[] b5 = { 0x05 };
+-    final byte[] b6 = { 0x06 };
+-    final byte[] bnum3 = { 0x33 };
+-    final byte[] bnum5 = { 0x35 };
+ 
+     @Test
+     public void hset() {
+@@ -88,106 +78,6 @@
+     }
+ 
+     @Test
+-    public void hsetex() {
+-	long status = jedis.hset("foo", "bar", "car");
+-	assertEquals(1, status);
+-	assertEquals("car", jedis.hget("foo", "bar"));
+-	
+-	status = jedis.hsetex("foo", "bar", "foo");
+-	assertEquals(1, status);
+-	assertEquals("foo", jedis.hget("foo", "bar"));
+-
+-	status = jedis.hsetex("foo", "car", "bar");
+-	assertEquals(0, status);
+-	assertEquals(null, jedis.hget("foo", "car"));
+-
+-	// Binary
+-	long bstatus = jedis.hset(bfoo, bbar, bcar);
+-	assertEquals(1, bstatus);
+-	assertArrayEquals(bcar, jedis.hget(bfoo, bbar));
+-
+-	bstatus = jedis.hsetex(bfoo, bbar, bfoo);
+-	assertEquals(1, bstatus);
+-	assertArrayEquals(bfoo, jedis.hget(bfoo, bbar));
+-
+-	bstatus = jedis.hsetex(bfoo, bcar, bbar);
+-	assertEquals(0, bstatus);
+-	assertArrayEquals(null, jedis.hget(bfoo, bcar));
+-    }
+-
+-    @Test
+-    public void hsetknx() {
+-	long status = jedis.hset("foo", "bar", "car");
+-	assertEquals(1, status);
+-	assertEquals("car", jedis.hget("foo", "bar"));
+-	
+-	status = jedis.hsetknx("bar", "bar", "foo");
+-	assertEquals(1, status);
+-	assertEquals("foo", jedis.hget("bar", "bar"));
+-	
+-	status = jedis.hsetknx("foo", "car", "foo");
+-	assertEquals(0, status);
+-	assertEquals(null, jedis.hget("foo", "car"));
+-
+-	status = jedis.hsetknx("foo", "bar", "bar");
+-	assertEquals(0, status);
+-	assertEquals("car", jedis.hget("foo", "bar"));
+-
+-	// Binary
+-	long bstatus = jedis.hset(bfoo, bbar, bcar);
+-	assertEquals(1, bstatus);
+-	assertArrayEquals(bcar, jedis.hget(bfoo, bbar));
+-
+-	bstatus = jedis.hsetknx(bbar, bbar, bfoo);
+-	assertEquals(1, bstatus);
+-	assertArrayEquals(bfoo, jedis.hget(bbar, bbar));
+-
+-	bstatus = jedis.hsetknx(bfoo, bcar, bfoo);
+-	assertEquals(0, bstatus);
+-	assertArrayEquals(null, jedis.hget(bfoo, bcar));
+-
+-	bstatus = jedis.hsetknx(bfoo, bbar, bbar);
+-	assertEquals(0, bstatus);
+-	assertArrayEquals(bcar, jedis.hget(bfoo, bbar));
+-    }
+-
+-    @Test
+-    public void hsetkex() {
+-	long status = jedis.hset("foo", "bar", "car");
+-	assertEquals(1, status);
+-	assertEquals("car", jedis.hget("foo", "bar"));
+-	
+-	status = jedis.hsetkex("foo", "bar", "foo");
+-	assertEquals(1, status);
+-	assertEquals("foo", jedis.hget("foo", "bar"));
+-	
+-	status = jedis.hsetkex("foo", "car", "foo");
+-	assertEquals(1, status);
+-	assertEquals("foo", jedis.hget("foo", "car"));
+-
+-	status = jedis.hsetkex("bar", "car", "bar");
+-	assertEquals(0, status);
+-	assertEquals(null, jedis.hget("bar", "car"));
+-
+-	// Binary
+-	long bstatus = jedis.hset(bfoo, bbar, bcar);
+-	assertEquals(1, bstatus);
+-	assertArrayEquals(bcar, jedis.hget(bfoo, bbar));
+-
+-	bstatus = jedis.hsetkex(bfoo, bbar, bfoo);
+-	assertEquals(1, bstatus);
+-	assertArrayEquals(bfoo, jedis.hget(bfoo, bbar));
+-
+-	bstatus = jedis.hsetkex(bfoo, bcar, bfoo);
+-	assertEquals(1, bstatus);
+-	assertArrayEquals(bfoo, jedis.hget(bfoo, bcar));
+-
+-	bstatus = jedis.hsetkex(bbar, bcar, bbar);
+-	assertEquals(0, bstatus);
+-	assertArrayEquals(null, jedis.hget(bbar, bcar));
+-    }
+-
+-    @Test
+     public void hmset() {
+ 	Map<String, String> hash = new HashMap<String, String>();
+ 	hash.put("bar", "car");
+@@ -209,62 +99,6 @@
+     }
+ 
+     @Test
+-    public void hmsetnx() {
+-	Map<String, String> hash = new HashMap<String, String>();
+-	hash.put("bar", "car");
+-	hash.put("car", "bar");
+-	String status = jedis.hmsetnx("foo", hash);
+-	assertEquals("OK", status);
+-	hash.put("bar", "foo");
+-	status = jedis.hmsetnx("foo", hash);
+-	assertEquals("0", status);
+-	assertEquals("car", jedis.hget("foo", "bar"));
+-	assertEquals("bar", jedis.hget("foo", "car"));
+-
+-	// Binary
+-	Map<byte[], byte[]> bhash = new HashMap<byte[], byte[]>();
+-	bhash.put(bbar, bcar);
+-	bhash.put(bcar, bbar);
+-	String bstatus = jedis.hmsetnx(bfoo, bhash);
+-	assertEquals("OK", bstatus);
+-	bhash.put(bbar, bfoo);
+-	bstatus = jedis.hmsetnx(bfoo, bhash);
+-	assertEquals("0", bstatus);
+-	assertArrayEquals(bcar, jedis.hget(bfoo, bbar));
+-	assertArrayEquals(bbar, jedis.hget(bfoo, bcar));
+-    }
+-
+-    @Test
+-    public void hmsetex() {
+-	Map<String, String> hash = new HashMap<String, String>();
+-	hash.put("bar", "car");
+-	hash.put("car", "bar");
+-	String status = jedis.hmset("foo", hash);
+-	assertEquals("OK", status);
+-	hash.put("bar", "foo");
+-	status = jedis.hmsetex("foo", hash);
+-	assertEquals("OK", status);
+-	status = jedis.hmsetex("bar", hash);
+-	assertEquals("0", status);
+-	assertEquals("foo", jedis.hget("foo", "bar"));
+-	assertEquals("bar", jedis.hget("foo", "car"));
+-
+-	// Binary
+-	Map<byte[], byte[]> bhash = new HashMap<byte[], byte[]>();
+-	bhash.put(bbar, bcar);
+-	bhash.put(bcar, bbar);
+-	String bstatus = jedis.hmset(bfoo, bhash);
+-	assertEquals("OK", bstatus);
+-	bhash.put(bbar, bfoo);
+-	bstatus = jedis.hmsetex(bfoo, bhash);
+-	assertEquals("OK", bstatus);
+-	bstatus = jedis.hmsetex(bbar, bhash);
+-	assertEquals("0", bstatus);
+-	assertArrayEquals(bfoo, jedis.hget(bfoo, bbar));
+-	assertArrayEquals(bbar, jedis.hget(bfoo, bcar));
+-    }
+-
+-    @Test
+     public void hmget() {
+ 	Map<String, String> hash = new HashMap<String, String>();
+ 	hash.put("bar", "car");
+@@ -314,60 +148,6 @@
+     }
+ 
+     @Test
+-    public void hincrByex() {
+-	long value = jedis.hincrBy("foo", "bar", 1);
+-	assertEquals(1, value);
+-	value = jedis.hincrByex("foo", "bar", 2);
+-	assertEquals(3, value);
+-	value = jedis.hincrByex("bar", "car", 2);
+-	assertEquals(0, value);
+-
+-	// Binary
+-	long bvalue = jedis.hincrBy(bfoo, bbar, 1);
+-	assertEquals(1, bvalue);
+-	bvalue = jedis.hincrByex(bfoo, bbar, 2);
+-	assertEquals(3, bvalue);
+-	bvalue = jedis.hincrByex(bbar, bcar, 2);
+-	assertEquals(0, bvalue);
+-    }
+-
+-    @Test
+-    public void hmincrByex() {
+-	long value = jedis.hincrBy("foo", "bar", 2);
+-	assertEquals(2, value);
+-	value = jedis.hincrBy("foo", "car", 3);
+-	assertEquals(3, value);
+-	Map<String, Long> hashMap = new HashMap<String, Long>();
+-	hashMap.put("bar", 1l);
+-	hashMap.put("car", 2l);
+-	String status = jedis.hmincrByex("foo", hashMap);
+-	assertEquals("OK", status);
+-	status = jedis.hmincrByex("bar", hashMap);
+-	assertEquals("0", status);
+-	status = jedis.hget("foo", "bar");
+-	assertEquals("3", status);
+-	status = jedis.hget("foo", "car");
+-	assertEquals("5", status);
+-
+-	// Binary
+-	long bvalue = jedis.hincrBy(bfoo, bbar, 2);
+-	assertEquals(2, bvalue);
+-	bvalue = jedis.hincrBy(bfoo, bcar, 3);
+-	assertEquals(3, bvalue);
+-	Map<byte[], Long> bhashMap = new HashMap<byte[], Long>();
+-	bhashMap.put(bbar, 1l);
+-	bhashMap.put(bcar, 2l);
+-	String bstatus = jedis.hmincrByex(bfoo, bhashMap);
+-	assertEquals("OK", bstatus);
+-	bstatus = jedis.hmincrByex(bbar, bhashMap);
+-	assertEquals("0", bstatus);
+-	byte[] b = jedis.hget(bfoo, bbar);
+-	assertArrayEquals(bnum3, b);
+-	b = jedis.hget(bfoo, bcar);
+-	assertArrayEquals(bnum5, b);
+-    }
+-
+-    @Test
+     public void hexists() {
+ 	Map<String, String> hash = new HashMap<String, String>();
+ 	hash.put("bar", "car");
+diff -ruN jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/ListCommandsTest.java jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/ListCommandsTest.java
+--- jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/ListCommandsTest.java	2014-03-06 11:59:40.000000000 +0800
++++ jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/ListCommandsTest.java	2014-03-06 12:01:09.000000000 +0800
+@@ -185,50 +185,6 @@
+     }
+ 
+     @Test
+-    public void lpushltrim() {
+-	jedis.lpush("foo", "1", "2", "3");
+-	String status = jedis.lpushltrim("foo", 0, -5, "A", "B", "C");
+-	assertEquals("OK", status);
+-	List<String> expected = new ArrayList<String>();
+-	expected.add("C");
+-	expected.add("B");
+-	assertEquals(2, jedis.llen("foo").intValue());
+-	assertEquals(expected, jedis.lrange("foo", 0, -1));
+-
+-	// Binary
+-	jedis.lpush(bfoo, b1, b2, b3);
+-	String bstatus = jedis.lpushltrim(bfoo, 0, -5, bA, bB, bC);
+-	assertEquals("OK", bstatus);
+-	List<byte[]> bexpected = new ArrayList<byte[]>();
+-	bexpected.add(bC);
+-	bexpected.add(bB);
+-	assertEquals(2, jedis.llen(bfoo).intValue());
+-	assertEquals(bexpected, jedis.lrange(bfoo, 0, -1));
+-    }
+-
+-    @Test
+-    public void lpushxltrim() {
+-	jedis.lpush("foo", "1", "2", "3");
+-	String status = jedis.lpushxltrim("foo", 0, -3, "A");
+-	assertEquals("OK", status);
+-	List<String> expected = new ArrayList<String>();
+-	expected.add("A");
+-	expected.add("3");
+-	assertEquals(2, jedis.llen("foo").intValue());
+-	assertEquals(expected, jedis.lrange("foo", 0, -1));
+-
+-	// Binary
+-	jedis.lpush(bfoo, b1, b2, b3);
+-	String bstatus = jedis.lpushxltrim(bfoo, 0, -3, bA);
+-	assertEquals("OK", bstatus);
+-	List<byte[]> bexpected = new ArrayList<byte[]>();
+-	bexpected.add(bA);
+-	bexpected.add(b3);
+-	assertEquals(2, jedis.llen(bfoo).intValue());
+-	assertEquals(bexpected, jedis.lrange(bfoo, 0, -1));
+-    }
+-
+-    @Test
+     public void lindex() {
+ 	jedis.lpush("foo", "1");
+ 	jedis.lpush("foo", "2");
+@@ -409,46 +365,6 @@
+     }
+ 
+     @Test
+-    public void lfind() {
+-	jedis.lpush("foo", "A", "B", "C", "1", "2", "3");
+-	List<String> elements = jedis.lfind("foo", "C", 4);
+-	List<String> expected = new ArrayList<String>();
+-	expected.add("C");
+-	expected.add("B");
+-	expected.add("A");
+-	assertEquals(expected, elements);
+-
+-	// Binary
+-	jedis.lpush(bfoo, bA, bB, bC, b1, b2, b3);
+-	List<byte[]> belements = jedis.lfind(bfoo, bC, 4);
+-	List<byte[]> bexpected = new ArrayList<byte[]>();
+-	bexpected.add(bC);
+-	bexpected.add(bB);
+-	bexpected.add(bA);
+-	assertEquals(bexpected, belements);
+-    }
+-
+-    @Test
+-    public void rfind() {
+-	jedis.lpush("foo", "A", "B", "C", "1", "2", "3");
+-	List<String> elements = jedis.rfind("foo", "1", 4);
+-	List<String> expected = new ArrayList<String>();
+-	expected.add("1");
+-	expected.add("2");
+-	expected.add("3");
+-	assertEquals(expected, elements);
+-
+-	// Binary
+-	jedis.rpush(bfoo, bA, bB, bC, b1, b2, b3);
+-	List<byte[]> belements = jedis.lfind(bfoo, b1, 4);
+-	List<byte[]> bexpected = new ArrayList<byte[]>();
+-	bexpected.add(b1);
+-	bexpected.add(b2);
+-	bexpected.add(b3);
+-	assertEquals(bexpected, belements);
+-    }
+-
+-    @Test
+     public void rpoplpush() {
+ 	jedis.rpush("foo", "a");
+ 	jedis.rpush("foo", "b");
+@@ -584,25 +500,6 @@
+     }
+ 
+     @Test
+-    public void lpushnx() {
+-	long size = jedis.lpush("foo", "bar");
+-	assertEquals(1, size);
+-	size = jedis.lpushnx("bar", "bar", "foo");
+-	assertEquals(1, size);
+-	size = jedis.lpushnx("foo", "bar", "foo");
+-	assertEquals(0, size);
+-
+-	// Binary
+-	long bsize = jedis.lpush(bfoo, bbar);
+-	assertEquals(1, bsize);
+-	bsize = jedis.lpushnx(bbar, bbar, bfoo);
+-	assertEquals(1, bsize);
+-	bsize = jedis.lpushnx(bfoo, bbar, bfoo);
+-	assertEquals(0, bsize);
+-
+-    }
+-
+-    @Test
+     public void linsert() {
+ 	long status = jedis.linsert("foo", Client.LIST_POSITION.BEFORE, "bar",
+ 		"car");
+diff -ruN jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/SetCommandsTest.java jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/SetCommandsTest.java
+--- jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/SetCommandsTest.java	2014-03-06 11:59:40.000000000 +0800
++++ jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/SetCommandsTest.java	2014-03-06 12:01:09.000000000 +0800
+@@ -1,7 +1,5 @@
+ package redis.clients.jedis.tests.commands;
+ 
+-import static redis.clients.jedis.ScanParams.SCAN_POINTER_START;
+-
+ import java.util.Arrays;
+ import java.util.HashSet;
+ import java.util.Set;
+@@ -10,6 +8,7 @@
+ 
+ import redis.clients.jedis.ScanParams;
+ import redis.clients.jedis.ScanResult;
++import static redis.clients.jedis.ScanParams.SCAN_POINTER_START;
+ 
+ public class SetCommandsTest extends JedisCommandTestBase {
+     final byte[] bfoo = { 0x01, 0x02, 0x03, 0x04 };
+@@ -38,34 +37,6 @@
+     }
+ 
+     @Test
+-    public void saddx() {
+-	long status = jedis.sadd("foo", "a");
+-	assertEquals(1, status);
+-
+-	status = jedis.saddx("foo", "b");
+-	assertEquals(1, status);
+-
+-	status = jedis.saddx("foo", "b");
+-	assertEquals(0, status);
+-
+-	status = jedis.saddx("bar", "b");
+-	assertEquals(0, status);
+-
+-	// Binary
+-	long bstatus = jedis.sadd(bfoo, ba);
+-	assertEquals(1, bstatus);
+-
+-	bstatus = jedis.saddx(bfoo, bb);
+-	assertEquals(1, bstatus);
+-
+-	bstatus = jedis.saddx(bfoo, bb);
+-	assertEquals(0, bstatus);
+-
+-	bstatus = jedis.saddx(bbar, bb);
+-	assertEquals(0, bstatus);
+-    }
+-
+-    @Test
+     public void smembers() {
+ 	jedis.sadd("foo", "a");
+ 	jedis.sadd("foo", "b");
+diff -ruN jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/SortedSetCommandsTest.java jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/SortedSetCommandsTest.java
+--- jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/SortedSetCommandsTest.java	2014-03-06 11:59:40.000000000 +0800
++++ jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/SortedSetCommandsTest.java	2014-03-06 12:01:09.000000000 +0800
+@@ -1,7 +1,5 @@
+ package redis.clients.jedis.tests.commands;
+ 
+-import static redis.clients.jedis.ScanParams.SCAN_POINTER_START;
+-
+ import java.util.LinkedHashSet;
+ import java.util.Set;
+ 
+@@ -12,6 +10,7 @@
+ import redis.clients.jedis.Tuple;
+ import redis.clients.jedis.ZParams;
+ import redis.clients.util.SafeEncoder;
++import static redis.clients.jedis.ScanParams.SCAN_POINTER_START;
+ 
+ public class SortedSetCommandsTest extends JedisCommandTestBase {
+     final byte[] bfoo = { 0x01, 0x02, 0x03, 0x04 };
+@@ -51,38 +50,6 @@
+     }
+ 
+     @Test
+-    public void zaddx() {
+-	long status = jedis.zadd("foo", 1d, "a");
+-	assertEquals(1, status);
+-
+-	status = jedis.zaddx("foo", 10d, "b");
+-	assertEquals(1, status);
+-
+-	status = jedis.zaddx("foo", 0.1d, "b");
+-	assertEquals(0, status);
+-	Double score = jedis.zscore("foo", "b");
+-	assertEquals((Double) 0.1d, score);
+-
+-	status = jedis.zaddx("bar", 1d, "a");
+-	assertEquals(0, status);
+-
+-	// Binary
+-	long bstatus = jedis.zadd(bfoo, 1d, ba);
+-	assertEquals(1, bstatus);
+-
+-	bstatus = jedis.zaddx(bfoo, 10d, bb);
+-	assertEquals(1, bstatus);
+-
+-	bstatus = jedis.zaddx(bfoo, 0.1d, bb);
+-	assertEquals(0, bstatus);
+-	Double bscore = jedis.zscore("foo", "b");
+-	assertEquals((Double) 0.1d, bscore);
+-
+-	bstatus = jedis.zaddx(bbar, 1d, ba);
+-	assertEquals(0, bstatus);
+-    }
+-
+-    @Test
+     public void zrange() {
+ 	jedis.zadd("foo", 1d, "a");
+ 	jedis.zadd("foo", 10d, "b");
+diff -ruN jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/StringValuesCommandsTest.java jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/StringValuesCommandsTest.java
+--- jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/commands/StringValuesCommandsTest.java	2014-03-06 11:59:40.000000000 +0800
++++ jedis-2.4.0/src/test/java/redis/clients/jedis/tests/commands/StringValuesCommandsTest.java	2014-03-06 12:01:09.000000000 +0800
+@@ -12,15 +12,6 @@
+     public void setAndGet() {
+ 	String status = jedis.set("foo", "bar");
+ 	assertEquals("OK", status);
+-	
+-	status = jedis.set("foo", "bar", "EQ", "EX", 300);
+-	assertEquals("0", status);
+-	
+-	status = jedis.set("foo", "bar2", "EQ", "PX", 200000);
+-	assertEquals("1", status);
+-	
+-	status = jedis.set("foo2", "bar", "EQ");
+-	assertEquals("OK", status);
+ 
+ 	String value = jedis.get("foo");
+ 	assertEquals("bar", value);
+@@ -82,18 +73,6 @@
+ 	long ttl = jedis.ttl("foo");
+ 	assertTrue(ttl > 0 && ttl <= 20);
+     }
+-    
+-    @Test
+-    public void seteq() {
+-	String status = jedis.seteq("foo", "bar");
+-	assertEquals("OK", status);
+-	
+-	status = jedis.seteq("foo", "bar");
+-	assertEquals("0", status);
+-	
+-	status = jedis.seteq("foo", "bar2");
+-	assertEquals("1", status);
+-    }
+ 
+     @Test
+     public void mset() {
+@@ -119,61 +98,43 @@
+     @Test(expected = JedisDataException.class)
+     public void incrWrongValue() {
+ 	jedis.set("foo", "bar");
+-	jedis.incr("foo", "XX", "EX", 300);
++	jedis.incr("foo");
+     }
+ 
+     @Test
+     public void incr() {
+ 	long value = jedis.incr("foo");
+ 	assertEquals(1, value);
+-	value = jedis.incr("foo", "XX", "EX", 300);
++	value = jedis.incr("foo");
+ 	assertEquals(2, value);
+-	value = jedis.incr("foo", "XX");
+-	assertEquals(3, value);
+-	value = jedis.incr("foo", "EX", 300);
+-	assertEquals(4, value);
+-	value = jedis.incr("foo2", "XX");
+-	assertEquals(0, value);
+     }
+ 
+     @Test(expected = JedisDataException.class)
+     public void incrByWrongValue() {
+ 	jedis.set("foo", "bar");
+-	jedis.incrBy("foo", 2, "XX", "EX", 300);
++	jedis.incrBy("foo", 2);
+     }
+ 
+     @Test
+     public void incrBy() {
+ 	long value = jedis.incrBy("foo", 2);
+ 	assertEquals(2, value);
+-	value = jedis.incrBy("foo", 2, "XX", "EX", 300);
++	value = jedis.incrBy("foo", 2);
+ 	assertEquals(4, value);
+-	value = jedis.incrBy("foo", 2, "XX");
+-	assertEquals(6, value);
+-	value = jedis.incrBy("foo", 2, "EX", 300);
+-	assertEquals(8, value);
+-	value = jedis.incrBy("foo2", 2, "XX");
+-	assertEquals(0, value);
+     }
+ 
+     @Test(expected = JedisDataException.class)
+     public void decrWrongValue() {
+ 	jedis.set("foo", "bar");
+-	jedis.decr("foo", "XX", "EX", 300);
++	jedis.decr("foo");
+     }
+ 
+     @Test
+     public void decr() {
+ 	long value = jedis.decr("foo");
+ 	assertEquals(-1, value);
+-	value = jedis.decr("foo", "XX", "EX", 300);
++	value = jedis.decr("foo");
+ 	assertEquals(-2, value);
+-	value = jedis.decr("foo", "XX");
+-	assertEquals(-3, value);
+-	value = jedis.decr("foo", "EX", 300);
+-	assertEquals(-4, value);
+-	value = jedis.decr("foo2", "XX");
+-	assertEquals(0, value);
+     }
+ 
+     @Test(expected = JedisDataException.class)
+@@ -186,14 +147,8 @@
+     public void decrBy() {
+ 	long value = jedis.decrBy("foo", 2);
+ 	assertEquals(-2, value);
+-	value = jedis.decrBy("foo", 2, "XX", "EX", 300);
++	value = jedis.decrBy("foo", 2);
+ 	assertEquals(-4, value);
+-	value = jedis.decrBy("foo", 2, "XX");
+-	assertEquals(-6, value);
+-	value = jedis.decrBy("foo", 2, "EX", 300);
+-	assertEquals(-8, value);
+-	value = jedis.decrBy("foo2", 2, "XX");
+-	assertEquals(0, value);
+     }
+ 
+     @Test
+diff -ruN jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/JedisClusterTest.java jedis-2.4.0/src/test/java/redis/clients/jedis/tests/JedisClusterTest.java
+--- jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/JedisClusterTest.java	1970-01-01 08:00:00.000000000 +0800
++++ jedis-2.4.0/src/test/java/redis/clients/jedis/tests/JedisClusterTest.java	2014-03-06 12:01:09.000000000 +0800
+@@ -0,0 +1,203 @@
++package redis.clients.jedis.tests;
++
++import java.util.HashSet;
++import java.util.Set;
++
++import org.junit.After;
++import org.junit.Assert;
++import org.junit.Before;
++import org.junit.Test;
++
++import redis.clients.jedis.HostAndPort;
++import redis.clients.jedis.Jedis;
++import redis.clients.jedis.JedisCluster;
++import redis.clients.jedis.Pipeline;
++import redis.clients.jedis.exceptions.JedisAskDataException;
++import redis.clients.jedis.exceptions.JedisClusterException;
++import redis.clients.jedis.exceptions.JedisClusterMaxRedirectionsException;
++import redis.clients.jedis.exceptions.JedisMovedDataException;
++import redis.clients.util.JedisClusterCRC16;
++
++public class JedisClusterTest extends Assert {
++    private Jedis node1;
++    private Jedis node2;
++    private Jedis node3;
++
++    private HostAndPort nodeInfo1 = HostAndPortUtil.getClusterServers().get(0);
++    private HostAndPort nodeInfo2 = HostAndPortUtil.getClusterServers().get(1);
++    private HostAndPort nodeInfo3 = HostAndPortUtil.getClusterServers().get(2);
++
++    @Before
++    public void setUp() throws InterruptedException {
++	node1 = new Jedis(nodeInfo1.getHost(), nodeInfo1.getPort());
++	node1.connect();
++	node1.flushAll();
++
++	node2 = new Jedis(nodeInfo2.getHost(), nodeInfo2.getPort());
++	node2.connect();
++	node2.flushAll();
++
++	node3 = new Jedis(nodeInfo3.getHost(), nodeInfo3.getPort());
++	node3.connect();
++	node3.flushAll();
++
++	// ---- configure cluster
++
++	// add nodes to cluster
++	node1.clusterMeet("127.0.0.1", nodeInfo2.getPort());
++	node1.clusterMeet("127.0.0.1", nodeInfo3.getPort());
++
++	// split available slots across the three nodes
++	int slotsPerNode = JedisCluster.HASHSLOTS / 3;
++	Pipeline pipeline1 = node1.pipelined();
++	Pipeline pipeline2 = node2.pipelined();
++	Pipeline pipeline3 = node3.pipelined();
++	for (int i = 0; i < JedisCluster.HASHSLOTS; i++) {
++	    if (i < slotsPerNode) {
++		pipeline1.clusterAddSlots(i);
++	    } else if (i > slotsPerNode * 2) {
++		pipeline3.clusterAddSlots(i);
++	    } else {
++		pipeline2.clusterAddSlots(i);
++	    }
++	}
++	pipeline1.sync();
++	pipeline2.sync();
++	pipeline3.sync();
++
++	waitForClusterReady();
++    }
++
++    @After
++    public void tearDown() {
++	// clear all slots
++	int[] slotsToDelete = new int[JedisCluster.HASHSLOTS];
++	for (int i = 0; i < JedisCluster.HASHSLOTS; i++) {
++	    slotsToDelete[i] = i;
++	}
++	node1.clusterDelSlots(slotsToDelete);
++	node2.clusterDelSlots(slotsToDelete);
++	node3.clusterDelSlots(slotsToDelete);
++    }
++
++    @Test(expected = JedisMovedDataException.class)
++    public void testThrowMovedException() {
++	node1.set("foo", "bar");
++    }
++
++    @Test
++    public void testMovedExceptionParameters() {
++	try {
++	    node1.set("foo", "bar");
++	} catch (JedisMovedDataException jme) {
++	    assertEquals(12182, jme.getSlot());
++	    assertEquals(new HostAndPort("127.0.0.1", 7381),
++		    jme.getTargetNode());
++	    return;
++	}
++	fail();
++    }
++
++    @Test(expected = JedisAskDataException.class)
++    public void testThrowAskException() {
++	int keySlot = JedisClusterCRC16.getSlot("test");
++	String node3Id = getNodeId(node3.clusterNodes());
++	node2.clusterSetSlotMigrating(keySlot, node3Id);
++	node2.get("test");
++    }
++
++    @Test
++    public void testDiscoverNodesAutomatically() {
++	Set<HostAndPort> jedisClusterNode = new HashSet<HostAndPort>();
++	jedisClusterNode.add(new HostAndPort("127.0.0.1", 7379));
++	JedisCluster jc = new JedisCluster(jedisClusterNode);
++	assertEquals(jc.getClusterNodes().size(), 3);
++    }
++
++    @Test
++    public void testCalculateConnectionPerSlot() {
++	Set<HostAndPort> jedisClusterNode = new HashSet<HostAndPort>();
++	jedisClusterNode.add(new HostAndPort("127.0.0.1", 7379));
++	JedisCluster jc = new JedisCluster(jedisClusterNode);
++	jc.set("foo", "bar");
++	jc.set("test", "test");
++	assertEquals("bar", node3.get("foo"));
++	assertEquals("test", node2.get("test"));
++    }
++
++    @Test
++    public void testRecalculateSlotsWhenMoved() throws InterruptedException {
++	Set<HostAndPort> jedisClusterNode = new HashSet<HostAndPort>();
++	jedisClusterNode.add(new HostAndPort("127.0.0.1", 7379));
++	JedisCluster jc = new JedisCluster(jedisClusterNode);
++	int slot51 = JedisClusterCRC16.getSlot("51");
++	node2.clusterDelSlots(slot51);
++	node3.clusterDelSlots(slot51);
++	node3.clusterAddSlots(slot51);
++
++	waitForClusterReady();
++	jc.set("51", "foo");
++	assertEquals("foo", jc.get("51"));
++    }
++
++    @Test
++    public void testAskResponse() throws InterruptedException {
++	Set<HostAndPort> jedisClusterNode = new HashSet<HostAndPort>();
++	jedisClusterNode.add(new HostAndPort("127.0.0.1", 7379));
++	JedisCluster jc = new JedisCluster(jedisClusterNode);
++	int slot51 = JedisClusterCRC16.getSlot("51");
++	node3.clusterSetSlotImporting(slot51, getNodeId(node2.clusterNodes()));
++	node2.clusterSetSlotMigrating(slot51, getNodeId(node3.clusterNodes()));
++	jc.set("51", "foo");
++	assertEquals("foo", jc.get("51"));
++    }
++
++    @Test(expected = JedisClusterException.class)
++    public void testThrowExceptionWithoutKey() {
++	Set<HostAndPort> jedisClusterNode = new HashSet<HostAndPort>();
++	jedisClusterNode.add(new HostAndPort("127.0.0.1", 7379));
++	JedisCluster jc = new JedisCluster(jedisClusterNode);
++	jc.ping();
++    }
++
++    @Test(expected = JedisClusterMaxRedirectionsException.class)
++    public void testRedisClusterMaxRedirections() {
++	Set<HostAndPort> jedisClusterNode = new HashSet<HostAndPort>();
++	jedisClusterNode.add(new HostAndPort("127.0.0.1", 7379));
++	JedisCluster jc = new JedisCluster(jedisClusterNode);
++	int slot51 = JedisClusterCRC16.getSlot("51");
++	// This will cause an infinite redirection loop
++	node2.clusterSetSlotMigrating(slot51, getNodeId(node3.clusterNodes()));
++	jc.set("51", "foo");
++    }
++    
++    @Test
++    public void testRedisHashtag() {
++	assertEquals(JedisClusterCRC16.getSlot("{bar"), JedisClusterCRC16.getSlot("foo{{bar}}zap"));
++	assertEquals(JedisClusterCRC16.getSlot("{user1000}.following"), JedisClusterCRC16.getSlot("{user1000}.followers"));
++	assertNotEquals(JedisClusterCRC16.getSlot("foo{}{bar}"), JedisClusterCRC16.getSlot("bar"));
++	assertEquals(JedisClusterCRC16.getSlot("foo{bar}{zap}"), JedisClusterCRC16.getSlot("bar"));
++    }
++
++    private String getNodeId(String infoOutput) {
++	for (String infoLine : infoOutput.split("\n")) {
++	    if (infoLine.contains("myself")) {
++		return infoLine.split(" ")[0];
++	    }
++	}
++	return "";
++    }
++
++    private void waitForClusterReady() throws InterruptedException {
++	boolean clusterOk = false;
++	while (!clusterOk) {
++	    if (node1.clusterInfo().split("\n")[0].contains("ok")
++		    && node2.clusterInfo().split("\n")[0].contains("ok")
++		    && node3.clusterInfo().split("\n")[0].contains("ok")) {
++		clusterOk = true;
++	    }
++	    Thread.sleep(50);
++	}
++    }
++    
++}
+diff -ruN jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/JedisSentinelTest.java jedis-2.4.0/src/test/java/redis/clients/jedis/tests/JedisSentinelTest.java
+--- jedis-2.4.0-custom/src/test/java/redis/clients/jedis/tests/JedisSentinelTest.java	2014-03-06 11:59:40.000000000 +0800
++++ jedis-2.4.0/src/test/java/redis/clients/jedis/tests/JedisSentinelTest.java	2014-03-06 12:01:09.000000000 +0800
+@@ -138,7 +138,7 @@
+ 	}
+     }
+ 
+-    //@Test
++    @Test
+     public void sentinelSet() {
+ 	Jedis j = new Jedis(sentinel.getHost(), sentinel.getPort());
+ 

@@ -1,0 +1,2057 @@
+diff -ruN redis-2.8.4-custom/src/help.h redis-2.8.4/src/help.h
+--- redis-2.8.4-custom/src/help.h	2014-03-06 11:51:48.000000000 +0800
++++ redis-2.8.4/src/help.h	2014-03-06 11:52:59.000000000 +0800
+@@ -120,12 +120,12 @@
+     9,
+     "1.0.0" },
+     { "DECR",
+-    "key [EX seconds] [PX milliseconds] [XX]",
++    "key",
+     "Decrement the integer value of a key by one",
+     1,
+     "1.0.0" },
+     { "DECRBY",
+-    "key decrement [EX seconds] [PX milliseconds] [XX]",
++    "key decrement",
+     "Decrement the integer value of a key by the given number",
+     1,
+     "1.0.0" },
+@@ -234,11 +234,6 @@
+     "Increment the integer value of a hash field by the given number",
+     5,
+     "2.0.0" },
+-    { "HINCRBYEX",
+-    "key field increment",
+-    "Increment the integer value of a hash field by the given number, only if the key exists",
+-    5,
+-    "1.0.0" },
+     { "HINCRBYFLOAT",
+     "key field increment",
+     "Increment the float value of a hash field by the given amount",
+@@ -259,46 +254,16 @@
+     "Get the values of all the given hash fields",
+     5,
+     "2.0.0" },
+-    { "HMINCRBYEX",
+-    "key field increment [field increment ...]",
+-    "Increment the integer values of multiple hash fields by given numbers, only if the key exists",
+-    5,
+-    "1.0.0" },
+     { "HMSET",
+     "key field value [field value ...]",
+     "Set multiple hash fields to multiple values",
+     5,
+     "2.0.0" },
+-    { "HMSETEX",
+-    "key field value [field value ...]",
+-    "Set multiple hash fields to multiple values, only if the key exists",
+-    5,
+-    "1.0.0" },
+-    { "HMSETNX",
+-    "key field value [field value ...]",
+-    "Set multiple hash fields to multiple values, only if the key does not exist",
+-    5,
+-    "1.0.0" },
+     { "HSET",
+     "key field value",
+     "Set the string value of a hash field",
+     5,
+     "2.0.0" },
+-    { "HSETEX",
+-    "key field value",
+-    "Set the value of a hash field, only if the field exists",
+-    5,
+-    "1.0.0" },
+-    { "HSETKEX",
+-    "key field value",
+-    "Set the value of a hash field, only if the key exists",
+-    5,
+-    "1.0.0" },
+-    { "HSETKNX",
+-    "key field value",
+-    "Set the value of a hash field, only if the key does not exist",
+-    5,
+-    "1.0.0" },
+     { "HSETNX",
+     "key field value",
+     "Set the value of a hash field, only if the field does not exist",
+@@ -310,12 +275,12 @@
+     5,
+     "2.0.0" },
+     { "INCR",
+-    "key [EX seconds] [PX milliseconds] [XX]",
++    "key",
+     "Increment the integer value of a key by one",
+     1,
+     "1.0.0" },
+     { "INCRBY",
+-    "key increment [EX seconds] [PX milliseconds] [XX]",
++    "key increment",
+     "Increment the integer value of a key by the given amount",
+     1,
+     "1.0.0" },
+@@ -339,11 +304,6 @@
+     "Get the UNIX time stamp of the last successful save to disk",
+     9,
+     "1.0.0" },
+-    { "LFIND",
+-    "key value num",
+-    "Get num successor elements of the given value(including itself) in a list",
+-    3,
+-    "1.0.0" },
+     { "LINDEX",
+     "key index",
+     "Get an element from a list by its index",
+@@ -369,26 +329,11 @@
+     "Prepend one or multiple values to a list",
+     2,
+     "1.0.0" },
+-    { "LPUSHLTRIM",
+-    "key value [value ...] start stop",
+-    "Prepend one or multiple values to a list, then trim a list to the specified range",
+-    2,
+-    "1.0.0" },
+-    { "LPUSHNX",
+-    "key value [value ...]",
+-    "Prepend one or multiple values to a list, only if the list not exist",
+-    2,
+-    "1.0.0" },
+     { "LPUSHX",
+     "key value",
+     "Prepend a value to a list, only if the list exists",
+     2,
+     "2.2.0" },
+-    { "LPUSHXLTRIM",
+-    "key value start stop",
+-    "Prepend a value to a list, only if the list exists, then trim a list to the specified range",
+-    2,
+-    "1.0.0" },
+     { "LRANGE",
+     "key start stop",
+     "Get a range of elements from a list",
+@@ -519,11 +464,6 @@
+     "Create a key using the provided serialized value, previously obtained using DUMP.",
+     0,
+     "2.6.0" },
+-    { "RFIND",
+-    "key value num",
+-    "Get num predecessor elements of the given value(including itself) in a list",
+-    3,
+-    "1.0.0" },
+     { "RPOP",
+     "key",
+     "Remove and get the last element in a list",
+@@ -539,11 +479,6 @@
+     "Append one or multiple values to a list",
+     2,
+     "1.0.0" },
+-    { "RPUSHNX",
+-    "key value [value ...]",
+-    "Append one or multiple values to a list, only if the list not exists",
+-    2,
+-    "1.0.0" },
+     { "RPUSHX",
+     "key value",
+     "Append a value to a list, only if the list exists",
+@@ -554,11 +489,6 @@
+     "Add one or more members to a set",
+     3,
+     "1.0.0" },
+-    { "SADDX",
+-    "key member [member ...]",
+-    "Add one or more members to a set, only if key exists",
+-    3,
+-    "1.0.0" },
+     { "SAVE",
+     "-",
+     "Synchronously save the dataset to disk",
+@@ -605,7 +535,7 @@
+     8,
+     "1.0.0" },
+     { "SET",
+-    "key value [EX seconds] [PX milliseconds] [NX|XX|EQ]",
++    "key value [EX seconds] [PX milliseconds] [NX|XX]",
+     "Set the string value of a key",
+     1,
+     "1.0.0" },
+@@ -614,11 +544,6 @@
+     "Sets or clears the bit at offset in the string value stored at key",
+     1,
+     "2.2.0" },
+-    { "SETEQ",
+-    "key value",
+-    "Set the value iff the key does not exist, otherwise return whether the two values are equal",
+-    1,
+-    "1.0.0" },
+     { "SETEX",
+     "key seconds value",
+     "Set the value and expiration of a key",
+@@ -754,11 +679,6 @@
+     "Add one or more members to a sorted set, or update its score if it already exists",
+     4,
+     "1.2.0" },
+-    { "ZADDX",
+-    "key score member [score member ...]",
+-    "Add one or more members to a sorted set only if key exists, or do nothing if it already exists",
+-    4,
+-    "1.0.0" },
+     { "ZCARD",
+     "key",
+     "Get the number of members in a sorted set",
+diff -ruN redis-2.8.4-custom/src/redis-benchmark.c redis-2.8.4/src/redis-benchmark.c
+--- redis-2.8.4-custom/src/redis-benchmark.c	2014-03-06 11:51:48.000000000 +0800
++++ redis-2.8.4/src/redis-benchmark.c	2014-03-06 11:52:59.000000000 +0800
+@@ -614,498 +614,10 @@
+     return strstr(config.tests,buf) != NULL;
+ }
+ 
+-void default_suite() {
+-    int i, len;
+-    char *cmd, *data = zmalloc(config.datasize + 1);
+-    memset(data, 'x', config.datasize);
+-    data[config.datasize] = '\0';
+-
+-    if (test_is_selected("ping_inline") || test_is_selected("ping"))
+-        benchmark("PING_INLINE", "PING\r\n", 6);
+-
+-    if (test_is_selected("ping_mbulk") || test_is_selected("ping")) {
+-        len = redisFormatCommand(&cmd, "PING");
+-        benchmark("PING_BULK", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("set")) {
+-        len = redisFormatCommand(&cmd, "SET key:__rand_int__ %s", data);
+-        benchmark("SET", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("get")) {
+-        len = redisFormatCommand(&cmd, "GET key:__rand_int__");
+-        benchmark("GET", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("incr")) {
+-        len = redisFormatCommand(&cmd, "INCR counter:__rand_int__");
+-        benchmark("INCR", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("lpush")) {
+-        len = redisFormatCommand(&cmd, "LPUSH mylist %s", data);
+-        benchmark("LPUSH", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("lpop")) {
+-        len = redisFormatCommand(&cmd, "LPOP mylist");
+-        benchmark("LPOP", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("sadd")) {
+-        len = redisFormatCommand(&cmd, "SADD myset element:__rand_int__");
+-        benchmark("SADD", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("spop")) {
+-        len = redisFormatCommand(&cmd, "SPOP myset");
+-        benchmark("SPOP", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("lrange") || test_is_selected("lrange_100")
+-            || test_is_selected("lrange_300") || test_is_selected("lrange_500")
+-            || test_is_selected("lrange_600")) {
+-        len = redisFormatCommand(&cmd, "LPUSH mylist %s", data);
+-        benchmark("LPUSH (needed to benchmark LRANGE)", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("lrange") || test_is_selected("lrange_100")) {
+-        len = redisFormatCommand(&cmd, "LRANGE mylist 0 99");
+-        benchmark("LRANGE_100 (first 100 elements)", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("lrange") || test_is_selected("lrange_300")) {
+-        len = redisFormatCommand(&cmd, "LRANGE mylist 0 299");
+-        benchmark("LRANGE_300 (first 300 elements)", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("lrange") || test_is_selected("lrange_500")) {
+-        len = redisFormatCommand(&cmd, "LRANGE mylist 0 449");
+-        benchmark("LRANGE_500 (first 450 elements)", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("lrange") || test_is_selected("lrange_600")) {
+-        len = redisFormatCommand(&cmd, "LRANGE mylist 0 599");
+-        benchmark("LRANGE_600 (first 600 elements)", cmd, len);
+-        free(cmd);
+-    }
+-
+-    if (test_is_selected("mset")) {
+-        const char *argv[21];
+-        argv[0] = "MSET";
+-        for (i = 1; i < 21; i += 2) {
+-            argv[i] = "key:__rand_int__";
+-            argv[i + 1] = data;
+-        }
+-        len = redisFormatCommandArgv(&cmd, 21, argv, NULL);
+-        benchmark("MSET (10 keys)", cmd, len);
+-        free(cmd);
+-    }
+-}
+-
+-void comment_suite() {
+-    int i, len;
+-    char *cmd;
+-    char *data = zmalloc(config.datasize + 1);
+-    memset(data, 'x', config.datasize);
+-    data[config.datasize] = '\0';
+-    char *data2 = zmalloc(config.datasize + 1);
+-    memset(data2, 'y', config.datasize);
+-    data2[config.datasize] = '\0';
+-    char *data3 = zmalloc(config.datasize + 1);
+-    memset(data3, 'z', config.datasize);
+-    data3[config.datasize] = '\0';
+-
+-// String
+-    // set
+-    len = redisFormatCommand(&cmd, "SET set_key %s", data);
+-    benchmark("set", cmd, len);
+-    free(cmd);
+-
+-    // seteq key doesn't exist
+-//    len = redisFormatCommand(&cmd, "SETEQ set_nokey %s", data);
+-//    benchmark("seteq key doesn't exist", cmd, len);
+-//    free(cmd);
+-
+-    // seteq key exists, same value
+-    len = redisFormatCommand(&cmd, "SETEQ set_key %s", data);
+-    benchmark("seteq key exists, same value", cmd, len);
+-    free(cmd);
+-
+-    // seteq key exists, different value
+-    len = redisFormatCommand(&cmd, "SETEQ set_key %s", data2);
+-    benchmark("seteq key exists, different value", cmd, len);
+-    free(cmd);
+-
+-    // incr
+-    len = redisFormatCommand(&cmd, "INCR incr_key");
+-    benchmark("incr", cmd, len);
+-    free(cmd);
+-
+-    // incr xx, key exists
+-    len = redisFormatCommand(&cmd, "INCR incr_key XX");
+-    benchmark("incr xx, key exists", cmd, len);
+-    free(cmd);
+-
+-    // incr xx, key doesn't exist
+-    len = redisFormatCommand(&cmd, "INCR incr_nokey XX");
+-    benchmark("incr xx, key doesn't exist", cmd, len);
+-    free(cmd);
+-
+-    // decr
+-    len = redisFormatCommand(&cmd, "DECR decr_key");
+-    benchmark("decr", cmd, len);
+-    free(cmd);
+-
+-    // decr xx, key exists
+-    len = redisFormatCommand(&cmd, "DECR decr_key XX");
+-    benchmark("decr xx, key exists", cmd, len);
+-    free(cmd);
+-
+-    // decr xx, key doesn't exist
+-    len = redisFormatCommand(&cmd, "DECR decr_nokey XX");
+-    benchmark("decr xx, key doesn't exist", cmd, len);
+-    free(cmd);
+-
+-    // incrby
+-    len = redisFormatCommand(&cmd, "INCRBY incrby_key 123");
+-    benchmark("incrby", cmd, len);
+-    free(cmd);
+-
+-    // incrby xx, key exists
+-    len = redisFormatCommand(&cmd, "INCRBY incrby_key 123 XX");
+-    benchmark("incrby xx, key exists", cmd, len);
+-    free(cmd);
+-
+-    // incrby xx, key doesn't exist
+-    len = redisFormatCommand(&cmd, "INCRBY incrby_nokey 123 XX");
+-    benchmark("incrby xx, key doesn't exist", cmd, len);
+-    free(cmd);
+-
+-    // decrby
+-    len = redisFormatCommand(&cmd, "DECRBY decrby_key 123");
+-    benchmark("decrby", cmd, len);
+-    free(cmd);
+-
+-    // decrby xx, key exists
+-    len = redisFormatCommand(&cmd, "DECRBY decrby_key 123 XX");
+-    benchmark("decrby xx, key exists", cmd, len);
+-    free(cmd);
+-
+-    // decrby xx, key doesn't exist
+-    len = redisFormatCommand(&cmd, "DECRBY decrby_nokey 123 XX");
+-    benchmark("decrby xx, key doesn't exist", cmd, len);
+-    free(cmd);
+-
+-// List
+-    // lpush (1 element)
+-    len = redisFormatCommand(&cmd, "LPUSH lpush_key %s", data);
+-    benchmark("lpush (1 element)", cmd, len);
+-    free(cmd);
+-
+-    // lpush (10 elements)
+-    const char *argv[12];
+-    argv[0] = "LPUSH";
+-    argv[1] = "lpush_key10";
+-    for (i = 2; i < 12; ++i) {
+-        argv[i] = data;
+-    }
+-    len = redisFormatCommandArgv(&cmd, 12, argv, NULL);
+-    benchmark("lpush (10 elements)", cmd, len);
+-    free(cmd);
+-
+-    // lpushnx, key exists
+-    len = redisFormatCommand(&cmd, "LPUSHNX lpushnx_key %s", data);
+-    benchmark("lpushnx, key exists", cmd, len);
+-    free(cmd);
+-
+-    // lpushnx, key doesn't exist
+-//    len = redisFormatCommand(&cmd, "LPUSHNX list_nokey %s", data);
+-//    benchmark("lpushnx, key doesn't exist", cmd, len);
+-//    free(cmd);
+-
+-    // rpush (1 element)
+-    len = redisFormatCommand(&cmd, "RPUSH rpush_key %s", data);
+-    benchmark("rpush (1 element)", cmd, len);
+-    free(cmd);
+-
+-    // rpush (10 elements)
+-    const char *argv_rpush[12];
+-    argv_rpush[0] = "RPUSH";
+-    argv_rpush[1] = "rpush_key10";
+-    for (i = 2; i < 12; ++i) {
+-        argv_rpush[i] = data;
+-    }
+-    len = redisFormatCommandArgv(&cmd, 12, argv_rpush, NULL);
+-    benchmark("rpush (10 elements)", cmd, len);
+-    free(cmd);
+-
+-    // rpushnx, key exists
+-    len = redisFormatCommand(&cmd, "RPUSHNX rpushnx_key %s", data);
+-    benchmark("rpushnx, key exists", cmd, len);
+-    free(cmd);
+-
+-    // rpushnx, key doesn't exist
+-//    len = redisFormatCommand(&cmd, "RPUSHNX list_nokey %s", data);
+-//    benchmark("rpushnx, key doesn't exist", cmd, len);
+-//    free(cmd);
+-
+-    // lfind, element exists (nth/2n element from left, return 1 element)
+-    // find the nth element in 2*n elements from left
+-    // lpush (1 element)
+-    len = redisFormatCommand(&cmd, "LPUSH lpush_key %s", data2);
+-    benchmark("-", cmd, len);
+-    free(cmd);
+-    len = redisFormatCommand(&cmd, "LFIND lpush_key %s 1", data);
+-    benchmark("lfind, element exists (nth/2n element from left, return 1 element)", cmd, len);
+-    free(cmd);
+-
+-    // lfind, element exists (nth/2n element from left, return 10 elements)
+-    // find the nth element in 2*n elements from left
+-    len = redisFormatCommand(&cmd, "LFIND lpush_key %s 10", data);
+-    benchmark("lfind, element exists (nth/2n element from left, return 10 elements)", cmd, len);
+-    free(cmd);
+-
+-    // lfind, element doesn't exist
+-    // traverse 2*n elements from left
+-    len = redisFormatCommand(&cmd, "LFIND lpush_key %s 1", data3);
+-    benchmark("lfind, element doesn't exist", cmd, len);
+-    free(cmd);
+-
+-    // rfind, element exists (nth/2n element from right, return 1 element)
+-    // find the nth element in 2*n elements from right
+-    len = redisFormatCommand(&cmd, "RPUSH rpush_key %s", data2);
+-    benchmark("-", cmd, len);
+-    free(cmd);
+-    len = redisFormatCommand(&cmd, "RFIND rpush_key %s 1", data);
+-    benchmark("rfind, element exists (nth/2n element from right, return 1 element)", cmd, len);
+-    free(cmd);
+-
+-    // rfind, element exists (nth/2n element from right, return 10 elements)
+-    // find the nth element in 2*n elements from right
+-    len = redisFormatCommand(&cmd, "RFIND rpush_key %s 10", data);
+-    benchmark("rfind, element exists (nth/2n element from right, return 10 elements)", cmd, len);
+-    free(cmd);
+-
+-    // rfind, element doesn't exist
+-    // traverse 2*n elements from right
+-    len = redisFormatCommand(&cmd, "RFIND rpush_key %s 1", data3);
+-    benchmark("rfind, element doesn't exist", cmd, len);
+-    free(cmd);
+-
+-    // lpushltrim (1 element in 1 element trim)
+-    len = redisFormatCommand(&cmd, "LPUSHLTRIM lpush_key %s 0 -2", data);
+-    benchmark("lpushltrim (1 element in 1 element trim)", cmd, len);
+-    free(cmd);
+-
+-    // lpushltrim (10 elements in 10 elements trim)
+-    const char *argv_lpushltrim[14];
+-    argv_lpushltrim[0] = "LPUSHLTRIM";
+-    argv_lpushltrim[1] = "lpush_key";
+-    for (i = 2; i < 12; ++i) {
+-        argv_lpushltrim[i] = data;
+-    }
+-    argv_lpushltrim[12] = "0";
+-    argv_lpushltrim[13] = "-11";
+-    len = redisFormatCommandArgv(&cmd, 14, argv_lpushltrim, NULL);
+-    benchmark("lpushltrim (10 elements in 10 elements trim)", cmd, len);
+-    free(cmd);
+-
+-    // lpushxltrim, key exists
+-    len = redisFormatCommand(&cmd, "LPUSHXLTRIM lpush_key %s 0 -2", data);
+-    benchmark("lpushxltrim, key exists", cmd, len);
+-    free(cmd);
+-
+-    // lpushxltrim, key doesn't exist
+-    len = redisFormatCommand(&cmd, "LPUSHXLTRIM lpushxltrim_nokey %s 0 -1", data);
+-    benchmark("lpushxltrim, key doesn't exist", cmd, len);
+-    free(cmd);
+-
+-// Hash
+-    // hset
+-    len = redisFormatCommand(&cmd, "HSET hset_key field1 %s", data);
+-    benchmark("hset", cmd, len);
+-    free(cmd);
+-
+-    // hsetnx, field exists
+-    len = redisFormatCommand(&cmd, "HSETNX hset_key field1 %s", data);
+-    benchmark("hsetnx, field exists", cmd, len);
+-    free(cmd);
+-
+-    // hsetnx, field doesn't exist
+-//    len = redisFormatCommand(&cmd, "HSETNX hash_key nofield %s", data);
+-//    benchmark("hsetnx, field doesn't exist", cmd, len);
+-//    free(cmd);
+-
+-    // hsetex, field exists
+-    len = redisFormatCommand(&cmd, "HSETEX hset_key field1 %s", data);
+-    benchmark("hsetex, field exists", cmd, len);
+-    free(cmd);
+-
+-    // hsetex, field doesn't exist
+-    len = redisFormatCommand(&cmd, "HSETEX hset_key nofield %s", data);
+-    benchmark("hsetex, field doesn't exist", cmd, len);
+-    free(cmd);
+-
+-    // hsetknx, key exists
+-    len = redisFormatCommand(&cmd, "HSETKNX hset_key field1 %s", data);
+-    benchmark("hsetknx, key exists", cmd, len);
+-    free(cmd);
+-
+-    // hsetknx, key doesn't exist
+-//    len = redisFormatCommand(&cmd, "HSETKNX hset_nokey field1 %s", data);
+-//    benchmark("hsetknx, key doesn't exist", cmd, len);
+-//    free(cmd);
+-
+-    // hsetkex, key exists
+-    len = redisFormatCommand(&cmd, "HSETKEX hset_key field1 %s", data);
+-    benchmark("hsetkex, key exists", cmd, len);
+-    free(cmd);
+-
+-    // hsetkex, key doesn't exist
+-    len = redisFormatCommand(&cmd, "HSETKEX hset_nokey field1 %s", data);
+-    benchmark("hsetkex, key doesn't exist", cmd, len);
+-    free(cmd);
+-
+-    // hmset (1 element)
+-    len = redisFormatCommand(&cmd, "HMSET hmset_key field1 %s", data);
+-    benchmark("hmset (1 element)", cmd, len);
+-    free(cmd);
+-
+-    // hmset (5 elements)
+-    len = redisFormatCommand(&cmd, "HMSET hmset_key field1 %s field2 %s"
+-            " field3 %s field4 %s field5 %s", data, data, data, data, data);
+-    benchmark("hmset (5 elements)", cmd, len);
+-    free(cmd);
+-
+-    // hmsetnx, key exists
+-    len = redisFormatCommand(&cmd, "HMSETNX hmset_key field1 %s", data);
+-    benchmark("hmsetnx, key exists", cmd, len);
+-    free(cmd);
+-
+-    // hmsetnx, key doesn't exist
+-//    len = redisFormatCommand(&cmd, "HMSETNX hmset_nokey field1 %s field2 %s", data, data2);
+-//    benchmark("hmsetnx, key doesn't exist", cmd, len);
+-//    free(cmd);
+-
+-    // hmsetex, key exists (1 element)
+-    len = redisFormatCommand(&cmd, "HMSETEX hmset_key field1 %s", data);
+-    benchmark("hmsetex, key exists (1 element)", cmd, len);
+-    free(cmd);
+-
+-    // hmsetex, key exists (5 elements)
+-    len = redisFormatCommand(&cmd, "HMSETEX hmset_key field1 %s field2 %s"
+-            " field3 %s field4 %s field5 %s", data, data, data, data, data);
+-    benchmark("hmsetex, key exists (5 elements)", cmd, len);
+-    free(cmd);
+-
+-    // hmsetex, key doesn't exist
+-    len = redisFormatCommand(&cmd, "HMSETEX hmset_nokey field1 %s", data);
+-    benchmark("hmsetex, key doesn't exist", cmd, len);
+-    free(cmd);
+-
+-    // hincrby
+-    len = redisFormatCommand(&cmd, "HINCRBY hincrby_key field1 123");
+-    benchmark("hincrby", cmd, len);
+-    free(cmd);
+-
+-    // hincrbyex, key exists
+-    len = redisFormatCommand(&cmd, "HINCRBYEX hincrby_key field1 123");
+-    benchmark("hincrbyex, key exists", cmd, len);
+-    free(cmd);
+-
+-    // hincrbyex, key doesn't exist
+-    len = redisFormatCommand(&cmd, "HINCRBYEX hincrby_nokey field1 123");
+-    benchmark("hincrbyex, key doesn't exist", cmd, len);
+-    free(cmd);
+-
+-    // hmincrbyex, key exists (1 element)
+-    len = redisFormatCommand(&cmd, "HMINCRBYEX hincrby_key field1 123");
+-    benchmark("hmincrbyex, key exists (1 element)", cmd, len);
+-    free(cmd);
+-
+-    // hmincrbyex, key exists (5 elements)
+-    len = redisFormatCommand(&cmd, "HMINCRBYEX hincrby_key field1 123 field2 123"
+-            " field3 123 field4 123 field5 123");
+-    benchmark("hmincrbyex, key exists (5 elements)", cmd, len);
+-    free(cmd);
+-
+-    // hmincrbyex, key doesn't exist
+-    len = redisFormatCommand(&cmd, "HMINCRBYEX hincrby_nokey field1 123");
+-    benchmark("hmincrbyex, key doesn't exist", cmd, len);
+-    free(cmd);
+-
+-// Set
+-    // sadd (1 element)
+-    len = redisFormatCommand(&cmd, "SADD sadd_key aaa");
+-    benchmark("sadd (1 element)", cmd, len);
+-    free(cmd);
+-
+-    // sadd (5 elements)
+-    len = redisFormatCommand(&cmd, "SADD sadd_key5 aaa bbb ccc ddd eee");
+-    benchmark("sadd (5 elements)", cmd, len);
+-    free(cmd);
+-
+-    // saddx, key exists (1 element)
+-    len = redisFormatCommand(&cmd, "SADDX sadd_key aaa");
+-    benchmark("saddx, key exists (1 element)", cmd, len);
+-    free(cmd);
+-
+-    // saddx, key exists (5 elements)
+-    len = redisFormatCommand(&cmd, "SADDX sadd_key5 aaa bbb ccc ddd eee");
+-    benchmark("saddx, key exists (5 elements)", cmd, len);
+-    free(cmd);
+-
+-    // saddx, key doesn't exist
+-    len = redisFormatCommand(&cmd, "SADDX sadd_nokey aaa");
+-    benchmark("saddx, key doesn't exist", cmd, len);
+-    free(cmd);
+-
+-// Sorted Set
+-    // zadd (1 element)
+-    len = redisFormatCommand(&cmd, "ZADD zadd_key 111 aaa");
+-    benchmark("zadd (1 element)", cmd, len);
+-    free(cmd);
+-
+-    // zadd (5 elements)
+-    len = redisFormatCommand(&cmd, "ZADD zadd_key 111 aaa 222 bbb"
+-            " 333 ccc 444 ddd 555 eee");
+-    benchmark("zadd (5 elements)", cmd, len);
+-    free(cmd);
+-
+-    // zaddx, key exists (1 element)
+-    len = redisFormatCommand(&cmd, "ZADDX zadd_key 111 aaa");
+-    benchmark("zaddx, key exists (1 element)", cmd, len);
+-    free(cmd);
+-
+-    // zaddx, key exists (5 elements)
+-    len = redisFormatCommand(&cmd, "ZADDX zadd_key 111 aaa 222 bbb"
+-            " 333 ccc 444 ddd 555 eee");
+-    benchmark("zaddx, key exists (5 elements)", cmd, len);
+-    free(cmd);
+-
+-    // zaddx, key doesn't exist
+-    len = redisFormatCommand(&cmd, "ZADDX zadd_nokey 111 aaa");
+-    benchmark("zaddx, key doesn't exist", cmd, len);
+-    free(cmd);
+-}
+-
+ int main(int argc, const char **argv) {
+-    int i, len;
+-    char *cmd;
++    int i;
++    char *data, *cmd;
++    int len;
+ 
+     client c;
+ 
+@@ -1172,8 +684,108 @@
+ 
+     /* Run default benchmark suite. */
+     do {
+-//        default_suite();
+-        comment_suite();
++        data = zmalloc(config.datasize+1);
++        memset(data,'x',config.datasize);
++        data[config.datasize] = '\0';
++
++        if (test_is_selected("ping_inline") || test_is_selected("ping"))
++            benchmark("PING_INLINE","PING\r\n",6);
++
++        if (test_is_selected("ping_mbulk") || test_is_selected("ping")) {
++            len = redisFormatCommand(&cmd,"PING");
++            benchmark("PING_BULK",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("set")) {
++            len = redisFormatCommand(&cmd,"SET key:__rand_int__ %s",data);
++            benchmark("SET",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("get")) {
++            len = redisFormatCommand(&cmd,"GET key:__rand_int__");
++            benchmark("GET",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("incr")) {
++            len = redisFormatCommand(&cmd,"INCR counter:__rand_int__");
++            benchmark("INCR",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("lpush")) {
++            len = redisFormatCommand(&cmd,"LPUSH mylist %s",data);
++            benchmark("LPUSH",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("lpop")) {
++            len = redisFormatCommand(&cmd,"LPOP mylist");
++            benchmark("LPOP",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("sadd")) {
++            len = redisFormatCommand(&cmd,
++                "SADD myset element:__rand_int__");
++            benchmark("SADD",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("spop")) {
++            len = redisFormatCommand(&cmd,"SPOP myset");
++            benchmark("SPOP",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("lrange") ||
++            test_is_selected("lrange_100") ||
++            test_is_selected("lrange_300") ||
++            test_is_selected("lrange_500") ||
++            test_is_selected("lrange_600"))
++        {
++            len = redisFormatCommand(&cmd,"LPUSH mylist %s",data);
++            benchmark("LPUSH (needed to benchmark LRANGE)",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("lrange") || test_is_selected("lrange_100")) {
++            len = redisFormatCommand(&cmd,"LRANGE mylist 0 99");
++            benchmark("LRANGE_100 (first 100 elements)",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("lrange") || test_is_selected("lrange_300")) {
++            len = redisFormatCommand(&cmd,"LRANGE mylist 0 299");
++            benchmark("LRANGE_300 (first 300 elements)",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("lrange") || test_is_selected("lrange_500")) {
++            len = redisFormatCommand(&cmd,"LRANGE mylist 0 449");
++            benchmark("LRANGE_500 (first 450 elements)",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("lrange") || test_is_selected("lrange_600")) {
++            len = redisFormatCommand(&cmd,"LRANGE mylist 0 599");
++            benchmark("LRANGE_600 (first 600 elements)",cmd,len);
++            free(cmd);
++        }
++
++        if (test_is_selected("mset")) {
++            const char *argv[21];
++            argv[0] = "MSET";
++            for (i = 1; i < 21; i += 2) {
++                argv[i] = "key:__rand_int__";
++                argv[i+1] = data;
++            }
++            len = redisFormatCommandArgv(&cmd,21,argv,NULL);
++            benchmark("MSET (10 keys)",cmd,len);
++            free(cmd);
++        }
+ 
+         if (!config.csv) printf("\n");
+     } while(config.loop);
+diff -ruN redis-2.8.4-custom/src/redis.c redis-2.8.4/src/redis.c
+--- redis-2.8.4-custom/src/redis.c	2014-03-06 11:51:48.000000000 +0800
++++ redis-2.8.4/src/redis.c	2014-03-06 11:52:59.000000000 +0800
+@@ -117,7 +117,6 @@
+     {"get",getCommand,2,"r",0,NULL,1,1,1,0,0},
+     {"set",setCommand,-3,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+     {"setnx",setnxCommand,3,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+-    {"seteq",seteqCommand,3,"wm",0,noPreloadGetKeys,1,1,1,0,0}, /* newly added */
+     {"setex",setexCommand,4,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+     {"psetex",psetexCommand,4,"wm",0,noPreloadGetKeys,1,1,1,0,0},
+     {"append",appendCommand,3,"wm",0,NULL,1,1,1,0,0},
+@@ -129,20 +128,16 @@
+     {"setrange",setrangeCommand,4,"wm",0,NULL,1,1,1,0,0},
+     {"getrange",getrangeCommand,4,"r",0,NULL,1,1,1,0,0},
+     {"substr",getrangeCommand,4,"r",0,NULL,1,1,1,0,0},
+-    {"incr",incrCommand,-2,"wm",0,NULL,1,1,1,0,0},  /* modified */
+-    {"decr",decrCommand,-2,"wm",0,NULL,1,1,1,0,0},  /* modified */
++    {"incr",incrCommand,2,"wm",0,NULL,1,1,1,0,0},
++    {"decr",decrCommand,2,"wm",0,NULL,1,1,1,0,0},
+     {"mget",mgetCommand,-2,"r",0,NULL,1,-1,1,0,0},
+     {"rpush",rpushCommand,-3,"wm",0,NULL,1,1,1,0,0},
+     {"lpush",lpushCommand,-3,"wm",0,NULL,1,1,1,0,0},
+-    {"rpushnx",rpushnxCommand,-3,"wm",0,NULL,1,1,1,0,0},    /* newly added */
+-    {"lpushnx",lpushnxCommand,-3,"wm",0,NULL,1,1,1,0,0},    /* newly added */
+     {"rpushx",rpushxCommand,3,"wm",0,NULL,1,1,1,0,0},
+     {"lpushx",lpushxCommand,3,"wm",0,NULL,1,1,1,0,0},
+     {"linsert",linsertCommand,5,"wm",0,NULL,1,1,1,0,0},
+     {"rpop",rpopCommand,2,"w",0,NULL,1,1,1,0,0},
+     {"lpop",lpopCommand,2,"w",0,NULL,1,1,1,0,0},
+-    {"lfind",lfindCommand,4,"r",0,NULL,1,1,1,0,0},  /* newly added */
+-    {"rfind",rfindCommand,4,"r",0,NULL,1,1,1,0,0},  /* newly added */
+     {"brpop",brpopCommand,-3,"ws",0,NULL,1,1,1,0,0},
+     {"brpoplpush",brpoplpushCommand,4,"wms",0,NULL,1,2,1,0,0},
+     {"blpop",blpopCommand,-3,"ws",0,NULL,1,-2,1,0,0},
+@@ -151,12 +146,9 @@
+     {"lset",lsetCommand,4,"wm",0,NULL,1,1,1,0,0},
+     {"lrange",lrangeCommand,4,"r",0,NULL,1,1,1,0,0},
+     {"ltrim",ltrimCommand,4,"w",0,NULL,1,1,1,0,0},
+-    {"lpushltrim",lpushltrimCommand,-5,"wm",0,NULL,1,1,1,0,0},  /* newly added */
+-    {"lpushxltrim",lpushxltrimCommand,5,"wm",0,NULL,1,1,1,0,0}, /* newly added */
+     {"lrem",lremCommand,4,"w",0,NULL,1,1,1,0,0},
+     {"rpoplpush",rpoplpushCommand,3,"wm",0,NULL,1,2,1,0,0},
+     {"sadd",saddCommand,-3,"wm",0,NULL,1,1,1,0,0},
+-    {"saddx",saddxCommand,-3,"wm",0,NULL,1,1,1,0,0},    /* newly added */
+     {"srem",sremCommand,-3,"w",0,NULL,1,1,1,0,0},
+     {"smove",smoveCommand,4,"w",0,NULL,1,2,1,0,0},
+     {"sismember",sismemberCommand,3,"r",0,NULL,1,1,1,0,0},
+@@ -172,7 +164,6 @@
+     {"smembers",sinterCommand,2,"rS",0,NULL,1,1,1,0,0},
+     {"sscan",sscanCommand,-3,"rR",0,NULL,1,1,1,0,0},
+     {"zadd",zaddCommand,-4,"wm",0,NULL,1,1,1,0,0},
+-    {"zaddx",zaddxCommand,-4,"wm",0,NULL,1,1,1,0,0},    /* newly added */
+     {"zincrby",zincrbyCommand,4,"wm",0,NULL,1,1,1,0,0},
+     {"zrem",zremCommand,-3,"w",0,NULL,1,1,1,0,0},
+     {"zremrangebyscore",zremrangebyscoreCommand,4,"w",0,NULL,1,1,1,0,0},
+@@ -191,18 +182,11 @@
+     {"zscan",zscanCommand,-3,"rR",0,NULL,1,1,1,0,0},
+     {"hset",hsetCommand,4,"wm",0,NULL,1,1,1,0,0},
+     {"hsetnx",hsetnxCommand,4,"wm",0,NULL,1,1,1,0,0},
+-    {"hsetex",hsetexCommand,4,"wm",0,NULL,1,1,1,0,0},   /* newly added */
+-    {"hsetknx",hsetknxCommand,4,"wm",0,NULL,1,1,1,0,0}, /* newly added */
+-    {"hsetkex",hsetkexCommand,4,"wm",0,NULL,1,1,1,0,0}, /* newly added */
+     {"hget",hgetCommand,3,"r",0,NULL,1,1,1,0,0},
+     {"hmset",hmsetCommand,-4,"wm",0,NULL,1,1,1,0,0},
+-    {"hmsetnx",hmsetnxCommand,-4,"wm",0,NULL,1,1,1,0,0},    /* newly added */
+-    {"hmsetex",hmsetexCommand,-4,"wm",0,NULL,1,1,1,0,0},    /* newly added */
+     {"hmget",hmgetCommand,-3,"r",0,NULL,1,1,1,0,0},
+     {"hincrby",hincrbyCommand,4,"wm",0,NULL,1,1,1,0,0},
+-    {"hincrbyex",hincrbyexCommand,4,"wm",0,NULL,1,1,1,0,0}, /* newly added */
+     {"hincrbyfloat",hincrbyfloatCommand,4,"wm",0,NULL,1,1,1,0,0},
+-    {"hmincrbyex",hmincrbyexCommand,-4,"wm",0,NULL,1,1,1,0,0},   /* newly added */
+     {"hdel",hdelCommand,-3,"w",0,NULL,1,1,1,0,0},
+     {"hlen",hlenCommand,2,"r",0,NULL,1,1,1,0,0},
+     {"hkeys",hkeysCommand,2,"rS",0,NULL,1,1,1,0,0},
+@@ -210,8 +194,8 @@
+     {"hgetall",hgetallCommand,2,"r",0,NULL,1,1,1,0,0},
+     {"hexists",hexistsCommand,3,"r",0,NULL,1,1,1,0,0},
+     {"hscan",hscanCommand,-3,"rR",0,NULL,1,1,1,0,0},
+-    {"incrby",incrbyCommand,-3,"wm",0,NULL,1,1,1,0,0},   /* modified */
+-    {"decrby",decrbyCommand,-3,"wm",0,NULL,1,1,1,0,0},   /* modified */
++    {"incrby",incrbyCommand,3,"wm",0,NULL,1,1,1,0,0},
++    {"decrby",decrbyCommand,3,"wm",0,NULL,1,1,1,0,0},
+     {"incrbyfloat",incrbyfloatCommand,3,"wm",0,NULL,1,1,1,0,0},
+     {"getset",getsetCommand,3,"wm",0,NULL,1,1,1,0,0},
+     {"mset",msetCommand,-3,"wm",0,NULL,1,-1,2,0,0},
+diff -ruN redis-2.8.4-custom/src/redis.h redis-2.8.4/src/redis.h
+--- redis-2.8.4-custom/src/redis.h	2014-03-06 11:51:48.000000000 +0800
++++ redis-2.8.4/src/redis.h	2014-03-06 11:52:59.000000000 +0800
+@@ -941,7 +941,6 @@
+ #endif
+ 
+ /* List data type */
+-listNode *listTypeSearchKey(list *list, void *key, int direction);
+ void listTypeTryConversion(robj *subject, robj *value);
+ void listTypePush(robj *subject, robj *value, int where);
+ robj *listTypePop(robj *subject, int where);
+@@ -1112,7 +1111,6 @@
+ void setTypeConvert(robj *subject, int enc);
+ 
+ /* Hash data type */
+-robj *hashTypeSerializeToJson(redisDb *db, robj *o);
+ void hashTypeConvert(robj *o, int enc);
+ void hashTypeTryConversion(robj *subject, robj **argv, int start, int end);
+ void hashTypeTryObjectEncoding(robj *subject, robj **o1, robj **o2);
+@@ -1207,7 +1205,6 @@
+ void echoCommand(redisClient *c);
+ void setCommand(redisClient *c);
+ void setnxCommand(redisClient *c);
+-void seteqCommand(redisClient *c);  /* newly added */
+ void setexCommand(redisClient *c);
+ void psetexCommand(redisClient *c);
+ void getCommand(redisClient *c);
+@@ -1237,25 +1234,18 @@
+ void renamenxCommand(redisClient *c);
+ void lpushCommand(redisClient *c);
+ void rpushCommand(redisClient *c);
+-void lpushnxCommand(redisClient *c);    /* newly added */
+-void rpushnxCommand(redisClient *c);    /* newly added */
+ void lpushxCommand(redisClient *c);
+ void rpushxCommand(redisClient *c);
+ void linsertCommand(redisClient *c);
+ void lpopCommand(redisClient *c);
+ void rpopCommand(redisClient *c);
+-void lfindCommand(redisClient *c);  /* newly added */
+-void rfindCommand(redisClient *c);  /* newly added */
+ void llenCommand(redisClient *c);
+ void lindexCommand(redisClient *c);
+ void lrangeCommand(redisClient *c);
+ void ltrimCommand(redisClient *c);
+-void lpushltrimCommand(redisClient *c); /* newly added */
+-void lpushxltrimCommand(redisClient *c);    /* newly added */
+ void typeCommand(redisClient *c);
+ void lsetCommand(redisClient *c);
+ void saddCommand(redisClient *c);
+-void saddxCommand(redisClient *c);  /* newly added */
+ void sremCommand(redisClient *c);
+ void smoveCommand(redisClient *c);
+ void sismemberCommand(redisClient *c);
+@@ -1291,7 +1281,6 @@
+ void msetCommand(redisClient *c);
+ void msetnxCommand(redisClient *c);
+ void zaddCommand(redisClient *c);
+-void zaddxCommand(redisClient *c);  /* newly added */
+ void zincrbyCommand(redisClient *c);
+ void zrangeCommand(redisClient *c);
+ void zrangebyscoreCommand(redisClient *c);
+@@ -1314,13 +1303,8 @@
+ void zrevrankCommand(redisClient *c);
+ void hsetCommand(redisClient *c);
+ void hsetnxCommand(redisClient *c);
+-void hsetexCommand(redisClient *c); /* newly added */
+-void hsetknxCommand(redisClient *c);    /* newly added */
+-void hsetkexCommand(redisClient *c);    /* newly added */
+ void hgetCommand(redisClient *c);
+ void hmsetCommand(redisClient *c);
+-void hmsetnxCommand(redisClient *c);    /* newly added */
+-void hmsetexCommand(redisClient *c);    /* newly added */
+ void hmgetCommand(redisClient *c);
+ void hdelCommand(redisClient *c);
+ void hlenCommand(redisClient *c);
+@@ -1335,9 +1319,7 @@
+ void hscanCommand(redisClient *c);
+ void configCommand(redisClient *c);
+ void hincrbyCommand(redisClient *c);
+-void hincrbyexCommand(redisClient *c);  /* newly added */
+ void hincrbyfloatCommand(redisClient *c);
+-void hmincrbyexCommand(redisClient *c); /* newly added */
+ void subscribeCommand(redisClient *c);
+ void unsubscribeCommand(redisClient *c);
+ void psubscribeCommand(redisClient *c);
+diff -ruN redis-2.8.4-custom/src/sort.c redis-2.8.4/src/sort.c
+--- redis-2.8.4-custom/src/sort.c	2014-03-06 11:51:48.000000000 +0800
++++ redis-2.8.4/src/sort.c	2014-03-06 11:52:59.000000000 +0800
+@@ -116,15 +116,11 @@
+          * already increases the refcount of the returned object. */
+         o = hashTypeGetObject(o, fieldobj);
+     } else {
+-        if (o->type == REDIS_STRING) {
+-            /* Every object that this function returns needs to have its refcount
+-             * increased. sortCommand decreases it again. */
+-            incrRefCount(o);
+-        } else if (o->type == REDIS_HASH) {
+-            o = hashTypeSerializeToJson(db, o);
+-        } else {
+-            goto noobj;
+-        }
++        if (o->type != REDIS_STRING) goto noobj;
++
++        /* Every object that this function returns needs to have its refcount
++         * increased. sortCommand decreases it again. */
++        incrRefCount(o);
+     }
+     decrRefCount(keyobj);
+     if (fieldobj) decrRefCount(fieldobj);
+diff -ruN redis-2.8.4-custom/src/t_hash.c redis-2.8.4/src/t_hash.c
+--- redis-2.8.4-custom/src/t_hash.c	2014-03-06 11:51:48.000000000 +0800
++++ redis-2.8.4/src/t_hash.c	2014-03-06 11:52:59.000000000 +0800
+@@ -460,141 +460,42 @@
+     }
+ }
+ 
+-robj *hashTypeSerializeToJson(redisDb *db, robj *o) {
+-    hashTypeIterator *hi;
+-    if (!o) return NULL;
+-
+-    sds json = sdsnew("{");
+-    hi = hashTypeInitIterator(o);
+-    while (hashTypeNext(hi) != REDIS_ERR) {
+-        if (hi->encoding == REDIS_ENCODING_ZIPLIST) {
+-            unsigned char *vstr = NULL;
+-            unsigned int vlen = UINT_MAX;
+-            long long vll = LLONG_MAX;
+-            hashTypeCurrentFromZiplist(hi, REDIS_HASH_KEY, &vstr, &vlen, &vll);
+-            if (vstr) {
+-                json = sdscat(json, "\"");
+-                json = sdscatlen(json, vstr, vlen);
+-                json = sdscat(json, "\"");
+-            } else {
+-                json = sdscatprintf(json, "%ld", vll);
+-            }
+-            json = sdscat(json, ":");
+-            vstr = NULL;
+-            hashTypeCurrentFromZiplist(hi, REDIS_HASH_VALUE, &vstr, &vlen, &vll);
+-            if (vstr) {
+-                json = sdscat(json, "\"");
+-                json = sdscatlen(json, vstr, vlen);
+-                json = sdscat(json, "\"");
+-            } else {
+-                json = sdscatprintf(json, "%ld", vll);
+-            }
+-            json = sdscat(json, ",");
+-        } else if (hi->encoding == REDIS_ENCODING_HT) {
+-            robj *value;
+-            hashTypeCurrentFromHashTable(hi, REDIS_HASH_KEY, &value);
+-            if (value->encoding == REDIS_ENCODING_RAW) {
+-                json = sdscat(json, "\"");
+-                json = sdscatlen(json, value->ptr, sdslen(value->ptr));
+-                json = sdscat(json, "\"");
+-            } else {
+-                json = sdscatprintf(json, "%ll", (long)value->ptr);
+-            }
+-            json = sdscat(json, ":");
+-            value = NULL;
+-            hashTypeCurrentFromHashTable(hi, REDIS_HASH_VALUE, &value);
+-            if (value->encoding == REDIS_ENCODING_RAW) {
+-                json = sdscat(json, "\"");
+-                json = sdscatlen(json, value->ptr, sdslen(value->ptr));
+-                json = sdscat(json, "\"");
+-            } else {
+-                json = sdscatprintf(json, "%ll", (long)value->ptr);
+-            }
+-            json = sdscat(json, ",");
+-        } else {
+-            redisPanic("Unknown hash encoding");
+-        }
+-    }
+-    hashTypeReleaseIterator(hi);
+-    json[sdslen(json) - 1] = '}';
+-
+-    return createObject(REDIS_STRING, json);
+-}
+-
+ /*-----------------------------------------------------------------------------
+  * Hash type commands
+  *----------------------------------------------------------------------------*/
+ 
+-#define REDIS_HASH_NO_FLAGS 0
+-#define REDIS_HASH_NX (1<<0)    /* Set if key does not exist. */
+-#define REDIS_HASH_EX (1<<1)    /* Set if key exists. */
+-#define REDIS_HASH_FIELD_NX (1<<2)  /* Set if field does not exist. */
+-#define REDIS_HASH_FIELD_EX (1<<3)  /* Set if value exists. */
+-
+-void hsetGenericCommand(redisClient *c, int flags) {
++void hsetCommand(redisClient *c) {
+     int update;
+-    robj *o = lookupKeyWrite(c->db,c->argv[1]);
++    robj *o;
+ 
+-    if (o == NULL) {
+-        if (flags == REDIS_HASH_EX || flags == REDIS_HASH_FIELD_EX) {
+-            addReply(c,shared.czero);
+-            return;
+-        }
+-        o = createHashObject();
+-        dbAdd(c->db,c->argv[1],o);
+-    } else {
+-        if (o->type != REDIS_HASH) {
+-            addReply(c,shared.wrongtypeerr);
+-            return;
+-        }
+-        if (flags == REDIS_HASH_NX) {
+-            addReply(c,shared.czero);
+-            return;
+-        }
+-    }
++    if ((o = hashTypeLookupWriteOrCreate(c,c->argv[1])) == NULL) return;
+     hashTypeTryConversion(o,c->argv,2,3);
+-
+-    if (hashTypeExists(o, c->argv[2])) {
+-        if (flags == REDIS_HASH_FIELD_NX) {
+-            addReply(c, shared.czero);
+-            return;
+-        }
+-    } else {
+-        if (flags == REDIS_HASH_FIELD_EX) {
+-            addReply(c, shared.czero);
+-            return;
+-        }
+-    }
+-
+     hashTypeTryObjectEncoding(o,&c->argv[2], &c->argv[3]);
+     update = hashTypeSet(o,c->argv[2],c->argv[3]);
+-    addReply(c, update && flags == REDIS_HASH_NO_FLAGS ? shared.czero : shared.cone);
++    addReply(c, update ? shared.czero : shared.cone);
+     signalModifiedKey(c->db,c->argv[1]);
+     notifyKeyspaceEvent(REDIS_NOTIFY_HASH,"hset",c->argv[1],c->db->id);
+     server.dirty++;
+ }
+ 
+-void hsetCommand(redisClient *c) {
+-    hsetGenericCommand(c,REDIS_HASH_NO_FLAGS);
+-}
+-
+ void hsetnxCommand(redisClient *c) {
+-    hsetGenericCommand(c,REDIS_HASH_FIELD_NX);
+-}
+-
+-void hsetexCommand(redisClient *c) {
+-    hsetGenericCommand(c,REDIS_HASH_FIELD_EX);
+-}
+-
+-void hsetknxCommand(redisClient *c) {
+-    hsetGenericCommand(c,REDIS_HASH_NX);
+-}
++    robj *o;
++    if ((o = hashTypeLookupWriteOrCreate(c,c->argv[1])) == NULL) return;
++    hashTypeTryConversion(o,c->argv,2,3);
+ 
+-void hsetkexCommand(redisClient *c) {
+-    hsetGenericCommand(c,REDIS_HASH_EX);
++    if (hashTypeExists(o, c->argv[2])) {
++        addReply(c, shared.czero);
++    } else {
++        hashTypeTryObjectEncoding(o,&c->argv[2], &c->argv[3]);
++        hashTypeSet(o,c->argv[2],c->argv[3]);
++        addReply(c, shared.cone);
++        signalModifiedKey(c->db,c->argv[1]);
++        notifyKeyspaceEvent(REDIS_NOTIFY_HASH,"hset",c->argv[1],c->db->id);
++        server.dirty++;
++    }
+ }
+ 
+-void hmsetGenericCommand(redisClient *c, int flags) {
++void hmsetCommand(redisClient *c) {
+     int i;
+     robj *o;
+ 
+@@ -603,24 +504,7 @@
+         return;
+     }
+ 
+-    o = lookupKeyWrite(c->db,c->argv[1]);
+-    if (o == NULL) {
+-        if (flags == REDIS_HASH_EX) {
+-            addReply(c, shared.czero);
+-            return;
+-        }
+-        o = createHashObject();
+-        dbAdd(c->db, c->argv[1], o);
+-    } else {
+-        if (o->type != REDIS_HASH) {
+-            addReply(c, shared.wrongtypeerr);
+-            return;
+-        }
+-        if (flags == REDIS_HASH_NX) {
+-            addReply(c, shared.czero);
+-            return;
+-        }
+-    }
++    if ((o = hashTypeLookupWriteOrCreate(c,c->argv[1])) == NULL) return;
+     hashTypeTryConversion(o,c->argv,2,c->argc-1);
+     for (i = 2; i < c->argc; i += 2) {
+         hashTypeTryObjectEncoding(o,&c->argv[i], &c->argv[i+1]);
+@@ -632,38 +516,12 @@
+     server.dirty++;
+ }
+ 
+-void hmsetCommand(redisClient *c) {
+-    hmsetGenericCommand(c,REDIS_HASH_NO_FLAGS);
+-}
+-
+-void hmsetnxCommand(redisClient *c) {
+-    hmsetGenericCommand(c,REDIS_HASH_NX);
+-}
+-
+-void hmsetexCommand(redisClient *c) {
+-    hmsetGenericCommand(c,REDIS_HASH_EX);
+-}
+-
+-void hincrbyGenericCommand(redisClient *c, int flags) {
++void hincrbyCommand(redisClient *c) {
+     long long value, incr, oldvalue;
+     robj *o, *current, *new;
+ 
+     if (getLongLongFromObjectOrReply(c,c->argv[3],&incr,NULL) != REDIS_OK) return;
+-
+-    o = lookupKeyWrite(c->db,c->argv[1]);
+-    if (o == NULL) {
+-        if (flags == REDIS_HASH_EX) {
+-            addReply(c, shared.czero);
+-            return;
+-        }
+-        o = createHashObject();
+-        dbAdd(c->db, c->argv[1], o);
+-    } else {
+-        if (o->type != REDIS_HASH) {
+-            addReply(c, shared.wrongtypeerr);
+-            return;
+-        }
+-    }
++    if ((o = hashTypeLookupWriteOrCreate(c,c->argv[1])) == NULL) return;
+     if ((current = hashTypeGetObject(o,c->argv[2])) != NULL) {
+         if (getLongLongFromObjectOrReply(c,current,&value,
+             "hash value is not an integer") != REDIS_OK) {
+@@ -692,14 +550,6 @@
+     server.dirty++;
+ }
+ 
+-void hincrbyCommand(redisClient *c) {
+-    hincrbyGenericCommand(c,REDIS_HASH_NO_FLAGS);
+-}
+-
+-void hincrbyexCommand(redisClient *c) {
+-    hincrbyGenericCommand(c,REDIS_HASH_EX);
+-}
+-
+ void hincrbyfloatCommand(redisClient *c) {
+     double long value, incr;
+     robj *o, *current, *new, *aux;
+@@ -736,64 +586,6 @@
+     decrRefCount(new);
+ }
+ 
+-void hmincrbyexCommand(redisClient *c) {
+-    int i;
+-    long long incr, value, oldvalue;
+-    robj *o, *current, *new;
+-
+-    if ((c->argc % 2) == 1) {
+-        addReplyError(c,"wrong number of arguments for HMSET");
+-        return;
+-    }
+-    for (i = 2; i < c->argc; i += 2) {
+-        if (isObjectRepresentableAsLongLong(c->argv[i+1],&incr) != REDIS_OK) {
+-            addReplyError(c,"value is not an integer or out of range");
+-            return;
+-        }
+-    }
+-
+-    o = lookupKeyWrite(c->db,c->argv[1]);
+-    if (o == NULL) {
+-        addReply(c, shared.czero);
+-        return;
+-    } else {
+-        if (o->type != REDIS_HASH) {
+-            addReply(c, shared.wrongtypeerr);
+-            return;
+-        }
+-    }
+-    hashTypeTryConversion(o,c->argv,2,c->argc-1);
+-    for (i = 2; i < c->argc; i += 2) {
+-        getLongLongFromObject(c->argv[i+1],&incr);
+-        if ((current = hashTypeGetObject(o, c->argv[i])) != NULL) {
+-            if (getLongLongFromObjectOrReply(c, current, &value,
+-                    "hash value is not an integer") != REDIS_OK) {
+-                decrRefCount(current);
+-                return;
+-            }
+-            decrRefCount(current);
+-        } else {
+-            value = 0;
+-        }
+-
+-        oldvalue = value;
+-        if ((incr < 0 && oldvalue < 0 && incr < (LLONG_MIN-oldvalue)) ||
+-            (incr > 0 && oldvalue > 0 && incr > (LLONG_MAX-oldvalue))) {
+-            addReplyError(c,"increment or decrement would overflow");
+-            return;
+-        }
+-        value += incr;
+-        new = createStringObjectFromLongLong(value);
+-        hashTypeTryObjectEncoding(o,&c->argv[i],NULL);
+-        hashTypeSet(o,c->argv[i],new);
+-        decrRefCount(new);
+-    }
+-    addReply(c, shared.ok);
+-    signalModifiedKey(c->db,c->argv[1]);
+-    notifyKeyspaceEvent(REDIS_NOTIFY_HASH,"hincrby",c->argv[1],c->db->id);
+-    server.dirty++;
+-}
+-
+ static void addHashFieldToReply(redisClient *c, robj *o, robj *field) {
+     int ret;
+ 
+diff -ruN redis-2.8.4-custom/src/t_list.c redis-2.8.4/src/t_list.c
+--- redis-2.8.4-custom/src/t_list.c	2014-03-06 11:51:48.000000000 +0800
++++ redis-2.8.4/src/t_list.c	2014-03-06 11:52:59.000000000 +0800
+@@ -290,57 +290,23 @@
+     }
+ }
+ 
+-listNode *listTypeSearchKey(list *list, void *key, int direction)
+-{
+-    listIter *iter;
+-    listNode *node;
+-    char* key_str = (char*) ((robj*) key)->ptr;
+-    size_t key_len = sdslen(key_str);
+-
+-    iter = listGetIterator(list, direction);
+-    while((node = listNext(iter)) != NULL) {
+-        char* str = (char*) ((robj*) node->value)->ptr;
+-        size_t len = sdslen(str);
+-        /* Don't use match function in loop, to improve performance. */
+-        if (key_len == len &&
+-                memcmp(key_str, str, len) == 0) {
+-            listReleaseIterator(iter);
+-            return node;
+-        }
+-    }
+-    listReleaseIterator(iter);
+-    return NULL;
+-}
+-
+ /*-----------------------------------------------------------------------------
+  * List Commands
+  *----------------------------------------------------------------------------*/
+ 
+-#define REDIS_PUSH_NO_FLAGS 0
+-#define REDIS_PUSH_NX (1<<0)    /* Push if key not exists. */
+-#define REDIS_PUSH_TRIM (1<<1)  /* Trim after push. */
+-#define REDIS_PUSH_XX_TRIM (1<<2)   /* Push if key exists, return after trim. */
+-#define REDIS_TRIM_AFTER_PUSH (1<<3)
+-
+-int pushGenericCommand(redisClient *c, int where, int flags) {
++void pushGenericCommand(redisClient *c, int where) {
+     int j, waiting = 0, pushed = 0;
+     robj *lobj = lookupKeyWrite(c->db,c->argv[1]);
+     int may_have_waiting_clients = (lobj == NULL);
+-    int args = flags == REDIS_PUSH_TRIM ? c->argc - 2 : c->argc;
+-
+-    if (lobj != NULL && flags == REDIS_PUSH_NX) {
+-        addReply(c,shared.czero);
+-        return 0;
+-    }
+ 
+     if (lobj && lobj->type != REDIS_LIST) {
+         addReply(c,shared.wrongtypeerr);
+-        return -1;
++        return;
+     }
+ 
+     if (may_have_waiting_clients) signalListAsReady(c,c->argv[1]);
+ 
+-    for (j = 2; j < args; j++) {
++    for (j = 2; j < c->argc; j++) {
+         c->argv[j] = tryObjectEncoding(c->argv[j]);
+         if (!lobj) {
+             lobj = createZiplistObject();
+@@ -349,11 +315,7 @@
+         listTypePush(lobj,c->argv[j],where);
+         pushed++;
+     }
+-    if (flags == REDIS_PUSH_NO_FLAGS) {
+-        addReplyLongLong(c, waiting + (lobj ? listTypeLength(lobj) : 0));
+-    } else if (flags == REDIS_PUSH_NX) {
+-        addReply(c,shared.cone);
+-    }
++    addReplyLongLong(c, waiting + (lobj ? listTypeLength(lobj) : 0));
+     if (pushed) {
+         char *event = (where == REDIS_HEAD) ? "lpush" : "rpush";
+ 
+@@ -361,33 +323,24 @@
+         notifyKeyspaceEvent(REDIS_NOTIFY_LIST,event,c->argv[1],c->db->id);
+     }
+     server.dirty += pushed;
+-    return 0;
+ }
+ 
+ void lpushCommand(redisClient *c) {
+-    pushGenericCommand(c,REDIS_HEAD,REDIS_PUSH_NO_FLAGS);
++    pushGenericCommand(c,REDIS_HEAD);
+ }
+ 
+ void rpushCommand(redisClient *c) {
+-    pushGenericCommand(c,REDIS_TAIL,REDIS_PUSH_NO_FLAGS);
+-}
+-
+-void lpushnxCommand(redisClient *c) {
+-    pushGenericCommand(c,REDIS_HEAD,REDIS_PUSH_NX);
+-}
+-
+-void rpushnxCommand(redisClient *c) {
+-    pushGenericCommand(c,REDIS_TAIL,REDIS_PUSH_NX);
++    pushGenericCommand(c,REDIS_TAIL);
+ }
+ 
+-int pushxGenericCommand(redisClient *c, robj *refval, robj *val, int where, int flags) {
++void pushxGenericCommand(redisClient *c, robj *refval, robj *val, int where) {
+     robj *subject;
+     listTypeIterator *iter;
+     listTypeEntry entry;
+     int inserted = 0;
+ 
+     if ((subject = lookupKeyReadOrReply(c,c->argv[1],shared.czero)) == NULL ||
+-        checkType(c,subject,REDIS_LIST)) return -1;
++        checkType(c,subject,REDIS_LIST)) return;
+ 
+     if (refval != NULL) {
+         /* We're not sure if this value can be inserted yet, but we cannot
+@@ -420,7 +373,7 @@
+         } else {
+             /* Notify client of a failed insert */
+             addReply(c,shared.cnegone);
+-            return -1;
++            return;
+         }
+     } else {
+         char *event = (where == REDIS_HEAD) ? "lpush" : "rpush";
+@@ -431,28 +384,25 @@
+         server.dirty++;
+     }
+ 
+-    if (flags != REDIS_PUSH_XX_TRIM) {
+-        addReplyLongLong(c,listTypeLength(subject));
+-    }
+-    return 0;
++    addReplyLongLong(c,listTypeLength(subject));
+ }
+ 
+ void lpushxCommand(redisClient *c) {
+     c->argv[2] = tryObjectEncoding(c->argv[2]);
+-    pushxGenericCommand(c,NULL,c->argv[2],REDIS_HEAD,REDIS_PUSH_NO_FLAGS);
++    pushxGenericCommand(c,NULL,c->argv[2],REDIS_HEAD);
+ }
+ 
+ void rpushxCommand(redisClient *c) {
+     c->argv[2] = tryObjectEncoding(c->argv[2]);
+-    pushxGenericCommand(c,NULL,c->argv[2],REDIS_TAIL,REDIS_PUSH_NO_FLAGS);
++    pushxGenericCommand(c,NULL,c->argv[2],REDIS_TAIL);
+ }
+ 
+ void linsertCommand(redisClient *c) {
+     c->argv[4] = tryObjectEncoding(c->argv[4]);
+     if (strcasecmp(c->argv[2]->ptr,"after") == 0) {
+-        pushxGenericCommand(c,c->argv[3],c->argv[4],REDIS_TAIL,REDIS_PUSH_NO_FLAGS);
++        pushxGenericCommand(c,c->argv[3],c->argv[4],REDIS_TAIL);
+     } else if (strcasecmp(c->argv[2]->ptr,"before") == 0) {
+-        pushxGenericCommand(c,c->argv[3],c->argv[4],REDIS_HEAD,REDIS_PUSH_NO_FLAGS);
++        pushxGenericCommand(c,c->argv[3],c->argv[4],REDIS_HEAD);
+     } else {
+         addReply(c,shared.syntaxerr);
+     }
+@@ -503,77 +453,6 @@
+     }
+ }
+ 
+-void findGenericCommand(redisClient *c, int direction) {
+-    robj *o = lookupKeyReadOrReply(c,c->argv[1],shared.nullbulk);
+-    if (o == NULL || checkType(c,o,REDIS_LIST)) return;
+-    long num;
+-    int i = 0;
+-    robj *value = c->argv[2];
+-    robj *ret = NULL;
+-    void *replylen = NULL;
+-
+-    if ((getLongFromObjectOrReply(c, c->argv[3], &num, NULL) != REDIS_OK))
+-        return;
+-    if (num < 1) {
+-        addReplyError(c,"num must be greater than 0");
+-        return;
+-    }
+-
+-    if (o->encoding == REDIS_ENCODING_ZIPLIST) {
+-        unsigned char *p;
+-        unsigned char *vstr;
+-        unsigned int vlen;
+-        long long vlong;
+-        p = ziplistIndex(o->ptr, ZIPLIST_HEAD);
+-        p = ziplistFind(p, value->ptr, sdslen(value->ptr), 0);
+-        if (p == NULL) {
+-            addReply(c,shared.nullbulk);
+-            return;
+-        }
+-        replylen = addDeferredMultiBulkLength(c);
+-        for (i = 0; i < num; ++i) {
+-            if (ziplistGet(p,&vstr,&vlen,&vlong) == 0) {
+-                break;
+-            }
+-            if (vstr) {
+-                addReplyBulkCBuffer(c,vstr,vlen);
+-            } else {
+-                addReplyBulkLongLong(c,vlong);
+-            }
+-            p = direction == AL_START_HEAD ? ziplistNext(o->ptr,p) : ziplistPrev(o->ptr,p);
+-        }
+-        setDeferredMultiBulkLength(c,replylen,i);
+-    } else if (o->encoding == REDIS_ENCODING_LINKEDLIST) {
+-        listNode *ln = listTypeSearchKey(o->ptr,value,direction);
+-        if (ln == NULL) {
+-            addReply(c,shared.nullbulk);
+-            return;
+-        }
+-        replylen = addDeferredMultiBulkLength(c);
+-        for (i = 0; i < num; ++i) {
+-            if (direction == AL_START_HEAD &&
+-                    (ln = ln->next) == ((list*)o->ptr)->tail ||
+-                    direction == AL_START_TAIL &&
+-                    (ln = ln->prev) == ((list*)o->ptr)->head) {
+-                break;
+-            }
+-            ret = listNodeValue(ln);
+-            addReplyBulk(c,ret);
+-        }
+-        setDeferredMultiBulkLength(c,replylen,i);
+-    } else {
+-        redisPanic("Unknown list encoding");
+-    }
+-}
+-
+-void lfindCommand(redisClient *c) {
+-    findGenericCommand(c,AL_START_HEAD);
+-}
+-
+-void rfindCommand(redisClient *c) {
+-    findGenericCommand(c,AL_START_TAIL);
+-}
+-
+ void lsetCommand(redisClient *c) {
+     robj *o = lookupKeyWriteOrReply(c,c->argv[1],shared.nokeyerr);
+     if (o == NULL || checkType(c,o,REDIS_LIST)) return;
+@@ -707,14 +586,14 @@
+     }
+ }
+ 
+-void ltrimGenericCommand(redisClient *c, int flags) {
++void ltrimCommand(redisClient *c) {
+     robj *o;
+     long start, end, llen, j, ltrim, rtrim;
+     list *list;
+     listNode *ln;
+ 
+-    if ((getLongFromObjectOrReply(c, c->argv[c->argc - 2], &start, NULL) != REDIS_OK) ||
+-        (getLongFromObjectOrReply(c, c->argv[c->argc - 1], &end, NULL) != REDIS_OK)) return;
++    if ((getLongFromObjectOrReply(c, c->argv[2], &start, NULL) != REDIS_OK) ||
++        (getLongFromObjectOrReply(c, c->argv[3], &end, NULL) != REDIS_OK)) return;
+ 
+     if ((o = lookupKeyWriteOrReply(c,c->argv[1],shared.ok)) == NULL ||
+         checkType(c,o,REDIS_LIST)) return;
+@@ -765,25 +644,6 @@
+     addReply(c,shared.ok);
+ }
+ 
+-void ltrimCommand(redisClient *c) {
+-    ltrimGenericCommand(c,REDIS_PUSH_NO_FLAGS);
+-}
+-
+-void lpushltrimCommand(redisClient *c) {
+-    if (pushGenericCommand(c,REDIS_HEAD,REDIS_PUSH_TRIM) != 0) {
+-        return;
+-    }
+-    ltrimGenericCommand(c,REDIS_TRIM_AFTER_PUSH);
+-}
+-
+-void lpushxltrimCommand(redisClient *c) {
+-    c->argv[2] = tryObjectEncoding(c->argv[2]);
+-    if (pushxGenericCommand(c,NULL,c->argv[2],REDIS_HEAD,REDIS_PUSH_XX_TRIM) != 0) {
+-        return;
+-    }
+-    ltrimGenericCommand(c,REDIS_TRIM_AFTER_PUSH);
+-}
+-
+ void lremCommand(redisClient *c) {
+     robj *subject, *obj;
+     obj = c->argv[3] = tryObjectEncoding(c->argv[3]);
+diff -ruN redis-2.8.4-custom/src/t_set.c redis-2.8.4/src/t_set.c
+--- redis-2.8.4-custom/src/t_set.c	2014-03-06 11:51:48.000000000 +0800
++++ redis-2.8.4/src/t_set.c	2014-03-06 11:52:59.000000000 +0800
+@@ -247,19 +247,12 @@
+     }
+ }
+ 
+-#define REDIS_SET_NO_FLAGS 0
+-#define REDIS_SET_ADD_EX (1<<0) /* Add if key exists. */
+-
+-void saddGenericCommand(redisClient *c, int flags) {
++void saddCommand(redisClient *c) {
+     robj *set;
+     int j, added = 0;
+ 
+     set = lookupKeyWrite(c->db,c->argv[1]);
+     if (set == NULL) {
+-        if (flags == REDIS_SET_ADD_EX) {
+-            addReply(c,shared.czero);
+-            return;
+-        }
+         set = setTypeCreate(c->argv[2]);
+         dbAdd(c->db,c->argv[1],set);
+     } else {
+@@ -281,14 +274,6 @@
+     addReplyLongLong(c,added);
+ }
+ 
+-void saddCommand(redisClient *c) {
+-    saddGenericCommand(c,REDIS_SET_NO_FLAGS);
+-}
+-
+-void saddxCommand(redisClient *c) {
+-    saddGenericCommand(c,REDIS_SET_ADD_EX);
+-}
+-
+ void sremCommand(redisClient *c) {
+     robj *set;
+     int j, deleted = 0, keyremoved = 0;
+diff -ruN redis-2.8.4-custom/src/t_string.c redis-2.8.4/src/t_string.c
+--- redis-2.8.4-custom/src/t_string.c	2014-03-06 11:51:48.000000000 +0800
++++ redis-2.8.4/src/t_string.c	2014-03-06 11:52:59.000000000 +0800
+@@ -61,12 +61,9 @@
+ #define REDIS_SET_NO_FLAGS 0
+ #define REDIS_SET_NX (1<<0)     /* Set if key not exists. */
+ #define REDIS_SET_XX (1<<1)     /* Set if key exists. */
+-#define REDIS_SET_EQ (1<<2)     /* If key exists, determine whether values are equal,
+-                                   else set the value. */
+ 
+ void setGenericCommand(redisClient *c, int flags, robj *key, robj *val, robj *expire, int unit, robj *ok_reply, robj *abort_reply) {
+     long long milliseconds = 0; /* initialized to avoid any harmness warning */
+-    robj *o;
+ 
+     if (expire) {
+         if (getLongLongFromObjectOrReply(c, expire, &milliseconds, NULL) != REDIS_OK)
+@@ -84,12 +81,6 @@
+         addReply(c, abort_reply ? abort_reply : shared.nullbulk);
+         return;
+     }
+-    if ((flags & REDIS_SET_EQ && (o = lookupKeyWrite(c->db,key)) != NULL))
+-    {
+-        if (checkType(c,o,REDIS_STRING)) return;
+-        addReply(c, compareStringObjects(val,o) ? shared.cone : shared.czero);
+-        return;
+-    }
+     setKey(c->db,key,val);
+     server.dirty++;
+     if (expire) setExpire(c->db,key,mstime()+milliseconds);
+@@ -99,7 +90,7 @@
+     addReply(c, ok_reply ? ok_reply : shared.ok);
+ }
+ 
+-/* SET key value [NX] [XX] [EQ] [EX <seconds>] [PX <milliseconds>] */
++/* SET key value [NX] [XX] [EX <seconds>] [PX <milliseconds>] */
+ void setCommand(redisClient *c) {
+     int j;
+     robj *expire = NULL;
+@@ -117,9 +108,6 @@
+                    (a[1] == 'x' || a[1] == 'X') && a[2] == '\0') {
+             flags |= REDIS_SET_XX;
+         } else if ((a[0] == 'e' || a[0] == 'E') &&
+-                   (a[1] == 'q' || a[1] == 'Q') && a[2] == '\0') {
+-            flags |= REDIS_SET_EQ;
+-        } else if ((a[0] == 'e' || a[0] == 'E') &&
+                    (a[1] == 'x' || a[1] == 'X') && a[2] == '\0' && next) {
+             unit = UNIT_SECONDS;
+             expire = next;
+@@ -144,11 +132,6 @@
+     setGenericCommand(c,REDIS_SET_NX,c->argv[1],c->argv[2],NULL,0,shared.cone,shared.czero);
+ }
+ 
+-void seteqCommand(redisClient *c) {
+-    c->argv[2] = tryObjectEncoding(c->argv[2]);
+-    setGenericCommand(c,REDIS_SET_EQ,c->argv[1],c->argv[2],NULL,0,NULL,NULL);
+-}
+-
+ void setexCommand(redisClient *c) {
+     c->argv[3] = tryObjectEncoding(c->argv[3]);
+     setGenericCommand(c,REDIS_SET_NO_FLAGS,c->argv[1],c->argv[3],c->argv[2],UNIT_SECONDS,NULL,NULL);
+@@ -344,53 +327,11 @@
+     msetGenericCommand(c,1);
+ }
+ 
+-void incrDecrCommand(redisClient *c, long long incr, int argv_pos) {
+-    int j;
+-    robj *expire = NULL;
+-    int unit = UNIT_SECONDS;
+-    int flags = REDIS_SET_NO_FLAGS;
+-    long long milliseconds = 0; /* initialized to avoid any harmness warning */
++void incrDecrCommand(redisClient *c, long long incr) {
+     long long value, oldvalue;
+     robj *o, *new;
+ 
+-    for (j = argv_pos; j < c->argc; j++) {
+-        char *a = c->argv[j]->ptr;
+-        robj *next = (j == c->argc-1) ? NULL : c->argv[j+1];
+-
+-        if ((a[0] == 'x' || a[0] == 'X') &&
+-                   (a[1] == 'x' || a[1] == 'X') && a[2] == '\0') {
+-            flags |= REDIS_SET_XX;
+-        } else if ((a[0] == 'e' || a[0] == 'E') &&
+-                   (a[1] == 'x' || a[1] == 'X') && a[2] == '\0' && next) {
+-            unit = UNIT_SECONDS;
+-            expire = next;
+-            j++;
+-        } else if ((a[0] == 'p' || a[0] == 'P') &&
+-                   (a[1] == 'x' || a[1] == 'X') && a[2] == '\0' && next) {
+-            unit = UNIT_MILLISECONDS;
+-            expire = next;
+-            j++;
+-        } else {
+-            addReply(c,shared.syntaxerr);
+-            return;
+-        }
+-    }
+-
+-    if (expire) {
+-        if (getLongLongFromObjectOrReply(c, expire, &milliseconds, NULL) != REDIS_OK)
+-            return;
+-        if (milliseconds <= 0) {
+-            addReplyErrorFormat(c,"invalid expire time in '%s'",c->cmd->name);
+-            return;
+-        }
+-        if (unit == UNIT_SECONDS) milliseconds *= 1000;
+-    }
+-
+     o = lookupKeyWrite(c->db,c->argv[1]);
+-    if (o == NULL && flags & REDIS_SET_XX) {
+-        addReply(c,shared.czero);
+-        return;
+-    }
+     if (o != NULL && checkType(c,o,REDIS_STRING)) return;
+     if (getLongLongFromObjectOrReply(c,o,&value,NULL) != REDIS_OK) return;
+ 
+@@ -407,10 +348,7 @@
+     else
+         dbAdd(c->db,c->argv[1],new);
+     signalModifiedKey(c->db,c->argv[1]);
+-    if (expire) setExpire(c->db,c->argv[1],mstime()+milliseconds);
+     notifyKeyspaceEvent(REDIS_NOTIFY_STRING,"incrby",c->argv[1],c->db->id);
+-    if (expire) notifyKeyspaceEvent(REDIS_NOTIFY_GENERIC,
+-            "expire",c->argv[1],c->db->id);
+     server.dirty++;
+     addReply(c,shared.colon);
+     addReply(c,new);
+@@ -418,25 +356,25 @@
+ }
+ 
+ void incrCommand(redisClient *c) {
+-    incrDecrCommand(c,1,2);
++    incrDecrCommand(c,1);
+ }
+ 
+ void decrCommand(redisClient *c) {
+-    incrDecrCommand(c,-1,2);
++    incrDecrCommand(c,-1);
+ }
+ 
+ void incrbyCommand(redisClient *c) {
+     long long incr;
+ 
+     if (getLongLongFromObjectOrReply(c, c->argv[2], &incr, NULL) != REDIS_OK) return;
+-    incrDecrCommand(c,incr,3);
++    incrDecrCommand(c,incr);
+ }
+ 
+ void decrbyCommand(redisClient *c) {
+     long long incr;
+ 
+     if (getLongLongFromObjectOrReply(c, c->argv[2], &incr, NULL) != REDIS_OK) return;
+-    incrDecrCommand(c,-incr,3);
++    incrDecrCommand(c,-incr);
+ }
+ 
+ void incrbyfloatCommand(redisClient *c) {
+diff -ruN redis-2.8.4-custom/src/t_zset.c redis-2.8.4/src/t_zset.c
+--- redis-2.8.4-custom/src/t_zset.c	2014-03-06 11:51:48.000000000 +0800
++++ redis-2.8.4/src/t_zset.c	2014-03-06 11:52:59.000000000 +0800
+@@ -837,12 +837,8 @@
+  * Sorted set commands 
+  *----------------------------------------------------------------------------*/
+ 
+-#define REDIS_SORTEDSET_ADD 0
+-#define REDIS_SORTEDSET_ADD_EX (1<<0) /* Add if key exists. */
+-#define REDIS_SORTEDSET_INCRBY (1<<1)
+-
+ /* This generic command implements both ZADD and ZINCRBY. */
+-void zaddGenericCommand(redisClient *c, int flags) {
++void zaddGenericCommand(redisClient *c, int incr) {
+     static char *nanerr = "resulting score is not a number (NaN)";
+     robj *key = c->argv[1];
+     robj *ele;
+@@ -869,10 +865,6 @@
+     /* Lookup the key and create the sorted set if does not exist. */
+     zobj = lookupKeyWrite(c->db,key);
+     if (zobj == NULL) {
+-        if (flags == REDIS_SORTEDSET_ADD_EX) {
+-            addReply(c,shared.czero);
+-            return;
+-        }
+         if (server.zset_max_ziplist_entries == 0 ||
+             server.zset_max_ziplist_value < sdslen(c->argv[3]->ptr))
+         {
+@@ -897,7 +889,7 @@
+             /* Prefer non-encoded element when dealing with ziplists. */
+             ele = c->argv[3+j*2];
+             if ((eptr = zzlFind(zobj->ptr,ele,&curscore)) != NULL) {
+-                if (flags == REDIS_SORTEDSET_INCRBY) {
++                if (incr) {
+                     score += curscore;
+                     if (isnan(score)) {
+                         addReplyError(c,nanerr);
+@@ -934,7 +926,7 @@
+                 curobj = dictGetKey(de);
+                 curscore = *(double*)dictGetVal(de);
+ 
+-                if (flags == REDIS_SORTEDSET_INCRBY) {
++                if (incr) {
+                     score += curscore;
+                     if (isnan(score)) {
+                         addReplyError(c,nanerr);
+@@ -967,7 +959,7 @@
+             redisPanic("Unknown sorted set encoding");
+         }
+     }
+-    if (flags == REDIS_SORTEDSET_INCRBY) /* ZINCRBY */
++    if (incr) /* ZINCRBY */
+         addReplyDouble(c,score);
+     else /* ZADD */
+         addReplyLongLong(c,added);
+@@ -977,20 +969,16 @@
+     if (added || updated) {
+         signalModifiedKey(c->db,key);
+         notifyKeyspaceEvent(REDIS_NOTIFY_ZSET,
+-            flags == REDIS_SORTEDSET_INCRBY ? "zincr" : "zadd", key, c->db->id);
++            incr ? "zincr" : "zadd", key, c->db->id);
+     }
+ }
+ 
+ void zaddCommand(redisClient *c) {
+-    zaddGenericCommand(c,REDIS_SORTEDSET_ADD);
+-}
+-
+-void zaddxCommand(redisClient *c) {
+-    zaddGenericCommand(c,REDIS_SORTEDSET_ADD_EX);
++    zaddGenericCommand(c,0);
+ }
+ 
+ void zincrbyCommand(redisClient *c) {
+-    zaddGenericCommand(c,REDIS_SORTEDSET_INCRBY);
++    zaddGenericCommand(c,1);
+ }
+ 
+ void zremCommand(redisClient *c) {
+diff -ruN redis-2.8.4-custom/tests/test_case.txt redis-2.8.4/tests/test_case.txt
+--- redis-2.8.4-custom/tests/test_case.txt	2014-03-06 11:51:47.000000000 +0800
++++ redis-2.8.4/tests/test_case.txt	1970-01-01 08:00:00.000000000 +0800
+@@ -1,179 +0,0 @@
+-
+-String:
+-
+-SET str_key 1234 EX 600
+-GET str_key
+-
+-INCR str_key
+-INCR str_key EX 600
+-INCR str_key PX 600000
+-
+-DECR str_key
+-DECR str_key EX 300
+-DECR str_key PX 300000
+-
+-INCRBY str_key 1000
+-INCRBY str_key 1000 EX 600
+-INCRBY str_key 1000 PX 600000
+-
+-DECRBY str_key 1000
+-DECRBY str_key 1000 EX 600
+-DECRBY str_key 1000 PX 600000
+-
+-SET str_key 9999
+-SET str_key 1000 EQ
+-SET str_key 9999 EQ
+-SET new_key 9999 EQ
+-SET str_key 1000 EQ EX 600
+-SET str_key 9999 EQ EX 600
+-SET ne2_key 9999 EQ EX 600
+-
+-SETEQ str_key 1000
+-SETEQ str_key 9999
+-SETEQ ne3_key 9999
+-
+-
+-List:
+-
+-ziplist:
+-LPUSH list_key aaa bbb ccc ddd eee
+-LFIND list_key ccc 3
+-LFIND list_key ddd 3
+-LFIND list_key fff 3
+-LFIND lis2_key ccc 3
+-RFIND list_key ccc 3
+-RFIND list_key bbb 3
+-RFIND list_key fff 3
+-RFIND lis2_key ccc 3
+-
+-LPUSHNX list_key fff
+-LPUSHNX lis2_key fff
+-LPUSHNX lis3_key fff ggg hhh
+-
+-LPUSHXLTRIM list_key ggg 0 -2
+-LPUSHXLTRIM list_key hhh 0 -1
+-LPUSHXLTRIM list_key iii 1 5
+-LPUSHXLTRIM list_key iii 2 4
+-LPUSHXLTRIM lis4_key aaa 0 1
+-
+-LPUSHLTRIM list_key jjj 0 -2
+-LPUSHLTRIM lis4_key jjj 0 -2
+-LPUSHLTRIM lis4_key jjj 0 -1
+-LPUSHLTRIM lis4_key jjj kkk lll 0 -2
+-LPUSHLTRIM lis5_key jjj kkk lll 0 -2
+-
+-adlist:
+-´ý²â
+-
+-
+-Hash:
+-
+-ziplist:
+-HMSETNX hash_key aaa 111 bbb 222 ccc 333
+-HMSETNX hash_key ddd 444
+-HMSETNX hash_key aaa 114
+-
+-HMSETEX hash_key ddd 444 eee 555
+-HMSETEX hash_key2 aaa 111
+-HMSETEX hash_key aaa 117
+-
+-HINCRBYEX hash_key aaa 3
+-HINCRBYEX hash_key ddd 3
+-HINCRBYEX hash_key3 aaa 3
+-
+-HMINCRBYEX hash_key aaa 30
+-HMINCRBYEX hash_key aaa 30 bbb 20 ccc 10
+-HMINCRBYEX hash_key aaa 30 eee 20
+-HMINCRBYEX hash_key3 aaa 30
+-
+-HSET hash_key aaa 111
+-HSET hash_key aaa 114
+-HSET hash_key bbb 222
+-HSET hash_key2 aaa 111
+-
+-HSETNX hash_key aaa 111
+-HSETNX hash_key ccc 333
+-HSETNX hash_key3 aaa 111
+-
+-HSETEX hash_key aaa 111
+-HSETEX hash_key ccc 333
+-HSETEX hash_key4 aaa 111
+-
+-HSETKNX hash_key aaa 117
+-HSETKNX hash_key ccc 333
+-HSETKNX hash_key5 aaa 111
+-
+-HSETKEX hash_key aaa 120
+-HSETKEX hash_key ccc 333
+-HSETKEX hash_key6 aaa 111
+-
+-dict:
+-´ý²â
+-
+-
+-Sorted Set:
+-
+-ziplist:
+-ZADD sskey 100 aaa 200 bbb
+-ZADDX sskey 110 aaa 300 ccc
+-ZADDX sskey2 100 aaa
+-
+-skiplist:
+-´ý²â
+-
+-
+-Set:
+-
+-intset:
+-SADD skey 100 300 200
+-SADDX skey 300
+-SADDX skey 400
+-SADDX skey2 100 200
+-
+-dict:
+-´ý²â
+-
+-
+-hashmap to json:
+-HMSET key1 a 1 b 2 c 3
+-HMSET key2 aa 11 bb 22 cc 33
+-HMSET key3 aaa 111 bbb 222 ccc 333
+-HMSET key4 1 a 2 b 3 c
+-HMSET key5 11 aa 22 bb 33 cc
+-HMSET key6 111 aaa 222 bbb 333 ccc
+-
+-LPUSH uid 4 5 6 1 2 3
+-127.0.0.1:6379> SORT uid GET # GET key*
+- 1) "1"
+- 2) "{\"a\":1,\"b\":2,\"c\":3}"
+- 3) "2"
+- 4) "{\"aa\":11,\"bb\":22,\"cc\":33}"
+- 5) "3"
+- 6) "{\"aaa\":111,\"bbb\":222,\"ccc\":333}"
+- 7) "4"
+- 8) "{1:\"a\",2:\"b\",3:\"c\"}"
+- 9) "5"
+-10) "{11:\"aa\",22:\"bb\",33:\"cc\"}"
+-11) "6"
+-12) "{111:\"aaa\",222:\"bbb\",333:\"ccc\"}"
+-
+-sadd uidset 1 2 3 4
+-127.0.0.1:6379> SORT uidset GET # GET key*
+-1) "1"
+-2) "{\"a\":1,\"b\":2,\"c\":3}"
+-3) "2"
+-4) "{\"aa\":11,\"bb\":22,\"cc\":33}"
+-5) "3"
+-6) "{\"aaa\":111,\"bbb\":222,\"ccc\":333}"
+-7) "4"
+-8) "{1:\"a\",2:\"b\",3:\"c\"}"
+-
+-zadd uidzset 1 1
+-zadd uidzset 2 2
+-127.0.0.1:6379> SORT uidzset GET # GET key*
+-1) "1"
+-2) "{\"a\":1,\"b\":2,\"c\":3}"
+-3) "2"
+-4) "{\"aa\":11,\"bb\":22,\"cc\":33}"
+-
+-
